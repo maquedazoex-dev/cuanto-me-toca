@@ -1,169 +1,1263 @@
-<style>
-  .calc-container {
-    max-width: 600px;
-    margin: 0 auto;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    border: 1px solid #e2e8f0;
-  }
-  .calc-step { display: none; }
-  .calc-step.active { display: block; }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuánto Me Toca | Calculadora Laboral Integral y Finiquito en España</title>
+  <meta name="description" content="Calcula lo que podrías cobrar al terminar tu trabajo: indemnización por despido, finiquito, prestación por desempleo (paro) y cotizaciones.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  .calc-label { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; display: block; }
-  .calc-slider { width: 100%; margin: 15px 0; accent-color: #2563eb; }
-  .calc-value-display { font-size: 24px; font-weight: 700; color: #1e293b; text-align: center; }
-  
-  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-  .calc-card {
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .calc-card:hover { border-color: #93c5fd; }
-  .calc-card.selected { border-color: #2563eb; background-color: #eff6ff; }
-  
-  .btn-next, .btn-prev {
-    width: 100%;
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: background 0.2s;
-  }
-  .btn-next:hover { background-color: #1d4ed8; }
-  
-  /* Bloque de Resultado */
-  .result-box {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    margin-top: 20px;
-    border: 1px solid #cbd5e1;
-  }
-  .result-price { font-size: 36px; font-weight: 800; color: #16a34a; margin: 10px 0; }
-  .breakdown-list { text-align: left; margin-top: 15px; font-size: 14px; color: #334155; }
-  .breakdown-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; }
-</style>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --secondary: #0f172a;
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-light: #fffbebf;
+      --danger: #ef4444;
+      --surface: #ffffff;
+      --background: #f8fafc;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 20px -2px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 35px -5px rgba(0,0,0,0.12);
+    }
 
-<div class="calc-container">
-  
-  <!-- PASO 1: SALARIO -->
-  <div class="calc-step active" id="step-1">
-    <span class="calc-label">¿Cuál es tu salario bruto mensual?</span>
-    <div class="calc-value-display" id="salary-val">2.000 €</div>
-    <input type="range" min="800" max="8000" value="2000" step="50" class="calc-slider" id="salary-input">
-    
-    <span class="calc-label" style="margin-top: 20px;">Número de pagas al año:</span>
-    <div class="card-grid">
-      <div class="calc-card selected" onclick="setPay(12, this)">12 pagas (Prorrateadas)</div>
-      <div class="calc-card" onclick="setPay(14, this)">14 pagas</div>
-    </div>
-    
-    <button class="btn-next" onclick="nextStep(2)">Siguiente paso →</button>
-  </div>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--background);
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  <!-- PASO 2: TIPO DE DESPIDO Y TIEMPO -->
-  <div class="calc-step" id="step-2">
-    <span class="calc-label">Años trabajados en la empresa:</span>
-    <div class="calc-value-display" id="years-val">3 años</div>
-    <input type="range" min="1" max="30" value="3" step="1" class="calc-slider" id="years-input">
+    /* HEADER & NAVBAR */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .logo-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--secondary);
+      letter-spacing: -0.5px;
+    }
+    .logo-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
 
-    <span class="calc-label" style="margin-top: 20px;">Tipo de despido / salida:</span>
-    <div class="card-grid">
-      <div class="calc-card selected" onclick="setType('improcedente', this)">Improcedente<br><small>(33 días/año)</small></div>
-      <div class="calc-card" onclick="setType('objetivo', this)">Objetivo / ERE<br><small>(20 días/año)</small></div>
-    </div>
+    .mode-toggle {
+      display: flex;
+      background: var(--background);
+      padding: 4px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+    }
+    .mode-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
 
-    <button class="btn-next" onclick="calculateResult()">Calcular mi indemnización</button>
-  </div>
+    /* MAIN CONTAINER */
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
 
-  <!-- PASO 3: RESULTADOS -->
-  <div class="calc-step" id="step-3">
-    <div class="result-box">
-      <span style="font-size: 14px; color: #64748b; font-weight: 600;">TU INDEMNIZACIÓN ESTIMADA ES:</span>
-      <div class="result-price" id="total-result">0 €</div>
-      
-      <div class="breakdown-list">
-        <div class="breakdown-item">
-          <span>Días aplicados:</span>
-          <strong id="days-applied">33 días/año</strong>
+    /* HERO ANNOUNCEMENT */
+    .hero-banner {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--secondary);
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+    .hero-claim {
+      font-size: 18px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .hero-subclaim {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* STEPPER PROGRESS */
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--border);
+      z-index: 1;
+    }
+    .stepper-progress {
+      position: absolute;
+      top: 18px;
+      left: 0;
+      height: 3px;
+      background: var(--primary);
+      z-index: 2;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .step-item {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-bubble {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 3px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .step-item.active .step-bubble {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--surface);
+    }
+    .step-item.completed .step-bubble {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .step-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .step-item.active .step-label { color: var(--primary); }
+
+    /* CARD WIZARD */
+    .wizard-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      padding: 36px;
+      transition: all 0.3s ease;
+    }
+
+    .question-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 8px;
+    }
+    .question-help {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* OPTION GRID (SELECCIÓN VISUAL) */
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .option-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option-card:hover {
+      border-color: #bfdbfe;
+      transform: translateY(-2px);
+    }
+    .option-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .option-icon { font-size: 24px; }
+    .option-title { font-weight: 700; font-size: 15px; color: var(--secondary); }
+    .option-desc { font-size: 12px; color: var(--text-muted); }
+
+    /* FORM ELEMENTS */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--secondary);
+      margin-bottom: 8px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ACTION BUTTONS */
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary {
+      background: var(--background);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #e2e8f0; color: var(--secondary); }
+
+    /* RESULT DASHBOARD */
+    .results-container { display: none; }
+    .hero-result-card {
+      background: linear-gradient(135deg, var(--secondary), #1e293b);
+      color: white;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-result-card::after {
+      content: '€';
+      position: absolute;
+      right: -20px;
+      bottom: -40px;
+      font-size: 180px;
+      font-weight: 900;
+      opacity: 0.04;
+      color: white;
+      pointer-events: none;
+    }
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-high { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge-review { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .result-total-label { font-size: 14px; color: #94a3b8; font-weight: 600; }
+    .result-total-amount { font-size: 42px; font-weight: 800; color: #ffffff; letter-spacing: -1px; margin: 4px 0 12px; }
+    .result-notice { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+
+    /* SUMMARY CARDS GRID */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .summary-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .summary-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .icon-indemnity { background: #dbeafe; color: var(--primary); }
+    .icon-finiquito { background: #fef3c7; color: var(--warning); }
+    .icon-paro { background: var(--success-light); color: var(--success); }
+
+    .summary-title { font-weight: 700; font-size: 15px; color: var(--secondary); }
+    .summary-val { font-size: 26px; font-weight: 800; color: var(--secondary); margin-bottom: 8px; }
+    .summary-subtext { font-size: 12px; color: var(--text-muted); }
+
+    /* ACCORDION EXPLANATIONS */
+    .details-section { margin-bottom: 32px; }
+    .accordion-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .accordion-header {
+      padding: 18px 24px;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--secondary);
+    }
+    .accordion-header:hover { background: var(--background); }
+    .accordion-body {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text-main);
+      background: #fafafa;
+    }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .breakdown-table td {
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .breakdown-table td:last-child { text-align: right; font-weight: 700; }
+
+    /* LEGAL TOGGLE BOX */
+    .legal-box {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .legal-source-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 6px;
+    }
+
+    /* FOOTER LEGAL SOURCES */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 60px;
+    }
+    .sources-list {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .source-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .source-link:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .hero-title { font-size: 24px; }
+      .wizard-card { padding: 20px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .result-total-amount { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon">€</div>
+        <div>
+          <div class="logo-title">CUÁNTO ME TOCA</div>
+          <div class="logo-subtitle">Calculadora Laboral Española</div>
         </div>
-        <div class="breakdown-item">
-          <span>Salario diario estimado:</span>
-          <strong id="daily-salary">0 €</strong>
-        </div>
+      </div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-mode-fast" onclick="setMode('fast')">Modo Rápido</button>
+        <button class="mode-btn" id="btn-mode-complete" onclick="setMode('complete')">Modo Completo</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main>
+    
+    <!-- HERO TITLE -->
+    <div class="hero-banner">
+      <h1 class="hero-title">Calcula lo que podrías cobrar al terminar tu trabajo</h1>
+      <p class="hero-claim">Indemnización, finiquito, paro y cotizaciones.</p>
+      <p class="hero-subclaim">Cuéntanos un poco sobre tu situación y calcularemos una estimación clara.</p>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="stepper" id="stepper">
+      <div class="stepper-progress" id="stepper-progress"></div>
+      <div class="step-item active" id="step-dot-1">
+        <div class="step-bubble">1</div>
+        <div class="step-label">Situación</div>
+      </div>
+      <div class="step-item" id="step-dot-2">
+        <div class="step-bubble">2</div>
+        <div class="step-label">Fechas</div>
+      </div>
+      <div class="step-item" id="step-dot-3">
+        <div class="step-bubble">3</div>
+        <div class="step-label">Salario</div>
+      </div>
+      <div class="step-item" id="step-dot-4" style="display:none;">
+        <div class="step-bubble">4</div>
+        <div class="step-label">Ajustes</div>
+      </div>
+      <div class="step-item" id="step-dot-5">
+        <div class="step-bubble">✓</div>
+        <div class="step-label">Resultado</div>
       </div>
     </div>
 
-    <!-- Espacio optimizado para el anuncio publicitario -->
-    <div style="margin-top: 20px; background: #eee; padding: 10px; text-align: center; border-radius: 8px; font-size: 12px; color: #999;">
-      [ANUNCIO ADSENSE / EZOIC]
+    <!-- WIZARD FORM CONTAINER -->
+    <div class="wizard-card" id="wizard-container">
+      
+      <!-- PASO 1: MOTIVO -->
+      <div class="wizard-step" id="step-1">
+        <h2 class="question-title">¿Cómo termina o va a terminar tu relación laboral?</h2>
+        <p class="question-help">Selecciona la opción que mejor describa tu caso. No te preocupes por la jerga legal.</p>
+        
+        <div class="option-grid">
+          <div class="option-card" onclick="selectReason('despido', this)">
+            <span class="option-icon">📄</span>
+            <span class="option-title">Me han despedido</span>
+            <span class="option-desc">La empresa me ha entregado una carta o comunicado de despido.</span>
+          </div>
+          <div class="option-card" onclick="selectReason('fin_contrato', this)">
+            <span class="option-icon">⏳</span>
+            <span class="option-title">Se termina mi contrato</span>
+            <span class="option-desc">Era un contrato temporal, de sustitución o por circunstancias concretas.</span>
+          </div>
+          <div class="option-card" onclick="selectReason('baja_voluntaria', this)">
+            <span class="option-icon">🚪</span>
+            <span class="option-title">Quiero dejar mi trabajo</span>
+            <span class="option-desc">Baja voluntaria o dimisión presentada por mi parte.</span>
+          </div>
+          <div class="option-card" onclick="selectReason('acuerdo', this)">
+            <span class="option-icon">🤝</span>
+            <span class="option-title">Hemos llegado a un acuerdo</span>
+            <span class="option-desc">Pacto de salida de mutuo acuerdo con la empresa.</span>
+          </div>
+          <div class="option-card" onclick="selectReason('no_seguro', this)">
+            <span class="option-icon">❓</span>
+            <span class="option-title">No estoy seguro/a</span>
+            <span class="option-desc">Tengo dudas sobre mi situación legal o el motivo exacto.</span>
+          </div>
+        </div>
+
+        <!-- PREGUNTA CONDICIONAL DESPIDO -->
+        <div id="subquestion-despido" style="display:none; margin-top:24px; padding-top:20px; border-top:1px dashed var(--border);">
+          <h3 class="question-title" style="font-size:17px;">¿Qué motivo alega la empresa en la carta?</h3>
+          <div class="option-grid" style="margin-top:12px;">
+            <div class="option-card" onclick="selectSubReason('objetivo', this)">
+              <span class="option-title">Causas económicas / ERE / Objetivo</span>
+              <span class="option-desc">Problemas económicos, de producción o reestructuración.</span>
+            </div>
+            <div class="option-card" onclick="selectSubReason('disciplinario', this)">
+              <span class="option-title">Incumplimiento o falta grave</span>
+              <span class="option-desc">Despido disciplinario (faltas, rendimiento, etc.).</span>
+            </div>
+            <div class="option-card" onclick="selectSubReason('improcedente_reconocido', this)">
+              <span class="option-title">Reconocido improcedente</span>
+              <span class="option-desc">La empresa admite la improcedencia o no da causa legal válida.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREGUNTA CONDICIONAL FIN CONTRATO -->
+        <div id="subquestion-contrato" style="display:none; margin-top:24px; padding-top:20px; border-top:1px dashed var(--border);">
+          <h3 class="question-title" style="font-size:17px;">¿De qué tipo de contrato se trata?</h3>
+          <div class="option-grid" style="margin-top:12px;">
+            <div class="option-card" onclick="selectSubReason('temporal_circunstancias', this)">
+              <span class="option-title">Circunstancias de la producción</span>
+              <span class="option-desc">Obra, servicio o acumulación de tareas.</span>
+            </div>
+            <div class="option-card" onclick="selectSubReason('sustitucion', this)">
+              <span class="option-title">Sustitución (Interinidad)</span>
+              <span class="option-desc">Sustituyendo a otra persona con reserva de puesto.</span>
+            </div>
+            <div class="option-card" onclick="selectSubReason('prueba', this)">
+              <span class="option-title">No superación periodo de prueba</span>
+              <span class="option-desc">Cese durante los primeros meses de prueba.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: FECHAS -->
+      <div class="wizard-step" id="step-2" style="display:none;">
+        <h2 class="question-title">¿Cuáles son las fechas de tu contrato?</h2>
+        <p class="question-help">Las fechas exactas permiten calcular la antigüedad real y aplicar los cambios normativos históricos (como la reforma de 2012).</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="startDate">Fecha de inicio de la relación laboral</label>
+            <input type="date" class="form-control" id="startDate" value="2020-01-15">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="endDate">Fecha de finalización o despido</label>
+            <input type="date" class="form-control" id="endDate" value="2026-09-30">
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 3: SALARIO -->
+      <div class="wizard-step" id="step-3" style="display:none;">
+        <h2 class="question-title">¿Cuánto cobras aproximadamente?</h2>
+        <p class="question-help">Indica tu salario bruto (antes de impuestos y retenciones de IRPF).</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="salaryAmount">Importe en Euros (€)</label>
+            <input type="number" class="form-control" id="salaryAmount" placeholder="Ej. 2100" value="2200">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="salaryType">Tipo de importe</label>
+            <select class="form-control" id="salaryType">
+              <option value="mensual">Salario Bruto Mensual</option>
+              <option value="anual">Salario Bruto Anual</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">¿Cómo cobras tus pagas extraordinarias?</label>
+          <div class="option-grid">
+            <div class="option-card selected" id="pay-12" onclick="selectPagas(12)">
+              <span class="option-title">12 pagas</span>
+              <span class="option-desc">Pagas extra prorrateadas cada mes.</span>
+            </div>
+            <div class="option-card" id="pay-14" onclick="selectPagas(14)">
+              <span class="option-title">14 pagas</span>
+              <span class="option-desc">Pagas extra separadas (Verano y Navidad).</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 4: AJUSTES (MODO COMPLETO) -->
+      <div class="wizard-step" id="step-4" style="display:none;">
+        <h2 class="question-title">Datos adicionales para la máxima precisión</h2>
+        <p class="question-help">Ajustes específicos sobre vacaciones, aviso previo y responsabilidades familiares.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="vacationDays">Días de vacaciones pendientes este año</label>
+            <input type="number" class="form-control" id="vacationDays" value="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="childrenCount">Hijos a cargo (para el cálculo del Paro)</label>
+            <input type="number" class="form-control" id="childrenCount" value="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="noticeDays">Días de preaviso no cumplidos por la empresa (o por ti)</label>
+          <input type="number" class="form-control" id="noticeDays" value="0" placeholder="Ej. 15 días si no te avisaron">
+        </div>
+      </div>
+
+      <!-- WIZARD ACTIONS -->
+      <div class="wizard-actions">
+        <button class="btn btn-secondary" id="btn-prev" onclick="prevStep()" style="display:none;">← Anterior</button>
+        <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Siguiente paso →</button>
+      </div>
+
     </div>
 
-    <button class="btn-next" style="background-color: #059669;" onclick="alert('Función para captar email y enviar PDF')">📩 Recibir informe detallado en PDF</button>
-    <button class="btn-prev" style="background-color: transparent; color: #64748b; margin-top: 5px;" onclick="nextStep(1)">← Volver a empezar</button>
-  </div>
+    <!-- RESULTS DASHBOARD (OCULTO INICIALMENTE) -->
+    <div class="results-container" id="results-container">
+      
+      <!-- HERO RESULT CARD -->
+      <div class="hero-result-card">
+        <div id="confidence-badge" class="result-badge badge-high">
+          <span>●</span> Estimación Alta Confianza
+        </div>
+        <div class="result-total-label">ESTIMACIÓN TOTAL INICIAL (FINIQUITO + INDEMNIZACIÓN)</div>
+        <div class="result-total-amount" id="total-amount-display">0,00 €</div>
+        <p class="result-notice">Esta cifra representa el cobro directo estimado de la empresa al terminar tu relación laboral. La prestación por desempleo (paro) se percibe posteriormente de forma mensual.</p>
+      </div>
 
-</div>
+      <!-- SUMMARY CARDS -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-header">
+            <div class="summary-icon icon-indemnity">💰</div>
+            <div class="summary-title">Indemnización</div>
+          </div>
+          <div class="summary-val" id="indemnity-amount">0,00 €</div>
+          <div class="summary-subtext" id="indemnity-subtext">Por extinción o despido</div>
+        </div>
 
-<script>
-  let payCount = 12;
-  let dismissalType = 'improcedente';
+        <div class="summary-card">
+          <div class="summary-header">
+            <div class="summary-icon icon-finiquito">📄</div>
+            <div class="summary-title">Finiquito Estimado</div>
+          </div>
+          <div class="summary-val" id="finiquito-amount">0,00 €</div>
+          <div class="summary-subtext" id="finiquito-subtext">Salario + Vacaciones + Pagas</div>
+        </div>
 
-  // Actualizar valores de sliders en tiempo real
-  document.getElementById('salary-input').addEventListener('input', (e) => {
-    document.getElementById('salary-val').innerText = parseInt(e.target.value).toLocaleString() + ' €';
-  });
+        <div class="summary-card">
+          <div class="summary-header">
+            <div class="summary-icon icon-paro">🟢</div>
+            <div class="summary-title">Paro Estimado (SEPE)</div>
+          </div>
+          <div class="summary-val" id="paro-monthly">0,00 €/mes</div>
+          <div class="summary-subtext" id="paro-duration">Duración estimada: 0 meses</div>
+        </div>
+      </div>
 
-  document.getElementById('years-input').addEventListener('input', (e) => {
-    document.getElementById('years-val').innerText = e.target.value + ' años';
-  });
+      <!-- DETALLES EXPLICATIVOS -->
+      <div class="details-section">
+        
+        <!-- ACCORDION INDEMNIZACIÓN -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion('acc-1')">
+            <span>¿Cómo hemos calculado tu indemnización?</span>
+            <span>▼</span>
+          </div>
+          <div class="accordion-body" id="acc-1">
+            <p id="indemnity-explanation-text">Explicación del cálculo...</p>
+            <table class="breakdown-table">
+              <tr><td>Salario diario utilizado:</td><td id="td-daily-salary">0 €</td></tr>
+              <tr><td>Antigüedad computada:</td><td id="td-seniority">0 años y 0 meses</td></tr>
+              <tr><td>Días de indemnización aplicados:</td><td id="td-indemnity-rate">0 días/año</td></tr>
+              <tr><td>Límite legal de mensualidades:</td><td id="td-indemnity-cap">-</td></tr>
+            </table>
+            <div class="legal-box">
+              <strong>Fuente legal:</strong> Artículos 49, 52 y 56 del Estatuto de los Trabajadores.
+              <span class="legal-source-tag">BOE-A-2015-11430</span>
+            </div>
+          </div>
+        </div>
 
-  function setPay(num, el) {
-    payCount = num;
-    el.parentElement.querySelectorAll('.calc-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-  }
+        <!-- ACCORDION FINIQUITO -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion('acc-2')">
+            <span>Desglose detallado de tu finiquito</span>
+            <span>▼</span>
+          </div>
+          <div class="accordion-body" id="acc-2">
+            <p>El finiquito incluye las cantidades pendientes de cobro a la fecha de salida:</p>
+            <table class="breakdown-table">
+              <tr><td>Salario del mes en curso:</td><td id="td-pending-salary">0 €</td></tr>
+              <tr><td>Vacaciones no disfrutadas:</td><td id="td-vacation-pay">0 €</td></tr>
+              <tr><td>Parte proporcional de pagas extra:</td><td id="td-extra-pay">0 €</td></tr>
+              <tr><td>Ajuste por preaviso:</td><td id="td-notice-pay">0 €</td></tr>
+              <tr style="color:var(--primary); font-size:16px;"><td><strong>TOTAL FINIQUITO:</strong></td><td id="td-finiquito-total">0 €</td></tr>
+            </table>
+          </div>
+        </div>
 
-  function setType(type, el) {
-    dismissalType = type;
-    el.parentElement.querySelectorAll('.calc-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-  }
+        <!-- ACCORDION PARO Y COTIZACIONES -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion('acc-3')">
+            <span>Prestación por desempleo y cotizaciones</span>
+            <span>▼</span>
+          </div>
+          <div class="accordion-body" id="acc-3">
+            <p id="paro-explanation-text">Análisis de cotización y desempleo...</p>
+            <table class="breakdown-table">
+              <tr><td>Días cotizados estimados:</td><td id="td-cotizacion-days">0 días</td></tr>
+              <tr><td>Tramo inicial (Primeros 180 días - 70%):</td><td id="td-paro-phase1">0 €/mes</td></tr>
+              <tr><td>Tramo posterior (Desde día 181 - 60%):</td><td id="td-paro-phase2">0 €/mes</td></tr>
+              <tr><td>Total acumulado estimado de prestación:</td><td id="td-paro-total-accumulated">0 €</td></tr>
+            </table>
+            <div class="legal-box">
+              <strong>Fuente oficial:</strong> Escala oficial del SEPE y Ley General de la Seguridad Social.
+              <span class="legal-source-tag">SEPE 2026</span>
+            </div>
+          </div>
+        </div>
 
-  function nextStep(step) {
-    document.querySelectorAll('.calc-step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step-' + step).classList.add('active');
-  }
+      </div>
 
-  function calculateResult() {
-    const salary = parseFloat(document.getElementById('salary-input').value);
-    const years = parseFloat(document.getElementById('years-input').value);
-    
-    // Cálculo anualizado
-    const annualSalary = payCount === 14 ? salary * 14 : salary * 12;
-    const dailySalary = annualSalary / 365;
-    
-    const daysPerYear = dismissalType === 'improcedente' ? 33 : 20;
-    let totalIndemnity = dailySalary * daysPerYear * years;
+      <!-- BOTONES DE ACCIÓN FINAL -->
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="resetCalculator()">↺ Hacer otra estimación</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Guardar informe</button>
+      </div>
 
-    // Renderizar resultados
-    document.getElementById('daily-salary').innerText = dailySalary.toFixed(2) + ' €';
-    document.getElementById('days-applied').innerText = daysPerYear + ' días/año';
-    document.getElementById('total-result').innerText = Math.round(totalIndemnity).toLocaleString() + ' €';
-    
-    nextStep(3);
-  }
-</script>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p><strong>«CUÁNTO ME TOCA»</strong> es una herramienta de estimación y orientación basada en la legislación laboral española vigente.</p>
+    <p style="margin-top:4px;">No constituye asesoramiento jurídico o laboral personalizado.</p>
+    <div class="sources-list">
+      <a class="source-link" href="https://www.boe.es/buscar/act.php?id=BOE-A-2015-11430" target="_blank">Estatuto de los Trabajadores</a>
+      <a class="source-link" href="https://www.sepe.es" target="_blank">Portal Oficial SEPE</a>
+      <a class="source-link" href="https://www.seg-social.es" target="_blank">Seguridad Social</a>
+    </div>
+    <p style="margin-top:12px; font-size:11px;">Última actualización de parámetros legales: Septiembre 2026</p>
+  </footer>
+
+  <!-- SISTEMA DE LÓGICA Y CÁLCULO CENTRALIZADO -->
+  <script>
+    /* ==========================================================================
+       1. PARÁMETROS CENTRALIZADOS DE LEGISLACIÓN ESPAÑOLA (LEGAL_CONFIG)
+       ========================================================================== */
+    const LEGAL_CONFIG = {
+      versionDate: '2026-01-15',
+      reform2012Date: new Date('2012-02-12'),
+      params: {
+        ipremMonthly: 600.00,
+        smiMonthly: 1134.00,
+        // Topes Mínimos y Máximos de Paro SEPE (con 1/6 parte prorrateada)
+        sepeMinNoChildren: 560.00,
+        sepeMinWithChildren: 749.00,
+        sepeMaxNoChildren: 1225.00,
+        sepeMax1Child: 1400.00,
+        sepeMax2OrMoreChildren: 1575.00,
+        sepeRatePhase1: 0.70, // Primeros 180 días
+        sepeRatePhase2: 0.60  // A partir del día 181
+      },
+      // Tabla Oficial de Duración de Prestación Contributiva según días cotizados (Art. 269 LGSS)
+      sepeTable: [
+        { minDays: 360, maxDays: 539, benefitDays: 120 },
+        { minDays: 540, maxDays: 719, benefitDays: 180 },
+        { minDays: 720, maxDays: 899, benefitDays: 240 },
+        { minDays: 900, maxDays: 1079, benefitDays: 300 },
+        { minDays: 1080, maxDays: 1259, benefitDays: 360 },
+        { minDays: 1260, maxDays: 1439, benefitDays: 420 },
+        { minDays: 1440, maxDays: 1619, benefitDays: 480 },
+        { minDays: 1620, maxDays: 1799, benefitDays: 540 },
+        { minDays: 1800, maxDays: 1979, benefitDays: 600 },
+        { minDays: 1980, maxDays: 2159, benefitDays: 660 },
+        { minDays: 2160, maxDays: 99999, benefitDays: 720 }
+      ]
+    };
+
+    /* ==========================================================================
+       2. ESTADO DE LA APLICACIÓN
+       ========================================================================== */
+    let appState = {
+      mode: 'fast', // 'fast' | 'complete'
+      currentStep: 1,
+      reason: null,
+      subReason: null,
+      pagas: 12,
+      startDate: '2020-01-15',
+      endDate: '2026-09-30',
+      salaryAmount: 2200,
+      salaryType: 'mensual',
+      vacationDays: 5,
+      childrenCount: 0,
+      noticeDays: 0
+    };
+
+    /* ==========================================================================
+       3. NAVEGACIÓN Y EVENTOS DEL ASISTENTE (WIZARD)
+       ========================================================================== */
+    function setMode(mode) {
+      appState.mode = mode;
+      document.getElementById('btn-mode-fast').classList.toggle('active', mode === 'fast');
+      document.getElementById('btn-mode-complete').classList.toggle('active', mode === 'complete');
+      document.getElementById('step-dot-4').style.display = mode === 'complete' ? 'flex' : 'none';
+      updateStepperUI();
+    }
+
+    function selectReason(reason, cardEl) {
+      appState.reason = reason;
+      cardEl.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+
+      document.getElementById('subquestion-despido').style.display = (reason === 'despido') ? 'block' : 'none';
+      document.getElementById('subquestion-contrato').style.display = (reason === 'fin_contrato') ? 'block' : 'none';
+    }
+
+    function selectSubReason(sub, cardEl) {
+      appState.subReason = sub;
+      cardEl.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+    }
+
+    function selectPagas(num) {
+      appState.pagas = num;
+      document.getElementById('pay-12').classList.toggle('selected', num === 12);
+      document.getElementById('pay-14').classList.toggle('selected', num === 14);
+    }
+
+    function updateStepperUI() {
+      const maxSteps = appState.mode === 'complete' ? 4 : 3;
+      const progressPercent = ((appState.currentStep - 1) / (maxSteps)) * 100;
+      document.getElementById('stepper-progress').style.width = `${progressPercent}%`;
+
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`step-dot-${i}`);
+        if (!dot) continue;
+        dot.classList.remove('active', 'completed');
+        if (i < appState.currentStep) dot.classList.add('completed');
+        else if (i === appState.currentStep) dot.classList.add('active');
+      }
+    }
+
+    function nextStep() {
+      if (appState.currentStep === 1 && !appState.reason) {
+        alert("Por favor, selecciona una opción para continuar.");
+        return;
+      }
+
+      const totalSteps = appState.mode === 'complete' ? 4 : 3;
+
+      if (appState.currentStep < totalSteps) {
+        document.getElementById(`step-${appState.currentStep}`).style.display = 'none';
+        appState.currentStep++;
+        document.getElementById(`step-${appState.currentStep}`).style.display = 'block';
+        document.getElementById('btn-prev').style.display = 'inline-flex';
+        updateStepperUI();
+      } else {
+        // Ejecutar Cálculos
+        calculateAndRenderResults();
+      }
+    }
+
+    function prevStep() {
+      if (appState.currentStep > 1) {
+        document.getElementById(`step-${appState.currentStep}`).style.display = 'none';
+        appState.currentStep--;
+        document.getElementById(`step-${appState.currentStep}`).style.display = 'block';
+        if (appState.currentStep === 1) document.getElementById('btn-prev').style.display = 'none';
+        updateStepperUI();
+      }
+    }
+
+    /* ==========================================================================
+       4. MOTOR DE CÁLCULO JURÍDICO LABORAL
+       ========================================================================== */
+    function calculateAndRenderResults() {
+      // Recoger variables de los campos
+      appState.startDate = new Date(document.getElementById('startDate').value);
+      appState.endDate = new Date(document.getElementById('endDate').value);
+      appState.salaryAmount = parseFloat(document.getElementById('salaryAmount').value) || 0;
+      appState.salaryType = document.getElementById('salaryType').value;
+      appState.vacationDays = parseFloat(document.getElementById('vacationDays').value) || 0;
+      appState.childrenCount = parseInt(document.getElementById('childrenCount').value) || 0;
+      appState.noticeDays = parseFloat(document.getElementById('noticeDays').value) || 0;
+
+      // A) Salario Diario
+      let annualGross = appState.salaryType === 'anual' 
+        ? appState.salaryAmount 
+        : (appState.salaryAmount * appState.pagas);
+      let dailySalary = annualGross / 365;
+      let monthlyGross = annualGross / 12;
+
+      // B) Antigüedad en Días y Meses
+      let diffTime = Math.max(0, appState.endDate - appState.startDate);
+      let totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Incluye el día de inicio
+      let totalMonths = Math.ceil(totalDays / 30.416); // Estimación prorrateo legal mensual
+
+      // C) CÁLCULO DE INDEMNIZACIÓN (Transitoria 5ª ET - Reforma 2012)
+      let indemnityResult = computeIndemnity(appState.startDate, appState.endDate, dailySalary, monthlyGross);
+
+      // D) CÁLCULO DE FINIQUITO
+      let finiquitoResult = computeFiniquito(appState.endDate, dailySalary, monthlyGross);
+
+      // E) CÁLCULO DE DESEMPLEO (PARO SEPE)
+      let paroResult = computeParo(totalDays, monthlyGross, appState.childrenCount, appState.reason);
+
+      // RENDERIZAR RESULTADOS
+      renderUIResults(indemnityResult, finiquitoResult, paroResult, dailySalary, totalDays, totalMonths);
+    }
+
+    function computeIndemnity(start, end, dailySalary, monthlyGross) {
+      let amount = 0;
+      let rateText = "";
+      let capText = "";
+      let explanation = "";
+
+      const effectiveReason = appState.subReason || appState.reason;
+
+      if (['baja_voluntaria', 'disciplinario', 'prueba'].includes(effectiveReason)) {
+        return {
+          amount: 0,
+          rateText: "0 días/año",
+          capText: "Sin indemnización legal",
+          explanation: "Este supuesto legal (baja voluntaria, despido disciplinario o no superación del periodo de prueba) no conlleva derecho a indemnización por extinción."
+        };
+      }
+
+      if (effectiveReason === 'objetivo' || effectiveReason === 'acuerdo') {
+        // 20 días/año con tope de 12 mensualidades (360 días)
+        let months = Math.ceil(((end - start) / (1000 * 60 * 60 * 24)) / 30.416);
+        amount = (dailySalary * 20) * (months / 12);
+        let maxCap = monthlyGross * 12;
+        if (amount > maxCap) amount = maxCap;
+
+        return {
+          amount: Math.round(amount * 100) / 100,
+          rateText: "20 días/año",
+          capText: "Tope máximo: 12 mensualidades",
+          explanation: "Se calcula a razón de 20 días de salario por año trabajado, prorrateándose por meses los periodos inferiores."
+        };
+      }
+
+      if (effectiveReason === 'temporal_circunstancias') {
+        let months = Math.ceil(((end - start) / (1000 * 60 * 60 * 24)) / 30.416);
+        amount = (dailySalary * 12) * (months / 12);
+        return {
+          amount: Math.round(amount * 100) / 100,
+          rateText: "12 días/año",
+          capText: "Tope máximo legal",
+          explanation: "Los contratos temporales por circunstancias de la producción devengan 12 días por año de servicio al finalizar."
+        };
+      }
+
+      // IMPROCEDENTE / SIN MOTIVO CLARO (Cálculo Mixto Reforma 2012)
+      if (effectiveReason === 'improcedente_reconocido' || effectiveReason === 'despido' || effectiveReason === 'no_seguro') {
+        const reformDate = LEGAL_CONFIG.reform2012Date;
+
+        if (start < reformDate) {
+          // Tramo 1: Hasta 12/02/2012 (45 días/año)
+          let daysT1 = Math.max(0, (reformDate - start) / (1000 * 60 * 60 * 24));
+          let monthsT1 = Math.ceil(daysT1 / 30.416);
+          let amountT1 = (dailySalary * 45) * (monthsT1 / 12);
+
+          // Tramo 2: Desde 12/02/2012 (33 días/año)
+          let daysT2 = Math.max(0, (end - reformDate) / (1000 * 60 * 60 * 24));
+          let monthsT2 = Math.ceil(daysT2 / 30.416);
+          let amountT2 = (dailySalary * 33) * (monthsT2 / 12);
+
+          let total = amountT1 + amountT2;
+          let cap42Months = monthlyGross * 42;
+          let cap24Months = monthlyGross * 24;
+
+          // Regla DT 5ª ET
+          if (amountT1 >= cap24Months) {
+            amount = Math.min(amountT1, cap42Months);
+          } else {
+            amount = Math.min(total, cap24Months);
+          }
+
+          return {
+            amount: Math.round(amount * 100) / 100,
+            rateText: "45/33 días (Mixto 2012)",
+            capText: "Tope transitorio aplicable (24/42 meses)",
+            explanation: "Cálculo en dos tramos por antigüedad anterior a febrero de 2012: 45 días/año hasta la reforma y 33 días/año posteriormente."
+          };
+        } else {
+          // Posterior a reforma 2012: 33 días/año tope 24 mensualidades
+          let months = Math.ceil(((end - start) / (1000 * 60 * 60 * 24)) / 30.416);
+          amount = (dailySalary * 33) * (months / 12);
+          let maxCap = monthlyGross * 24;
+          if (amount > maxCap) amount = maxCap;
+
+          return {
+            amount: Math.round(amount * 100) / 100,
+            rateText: "33 días/año",
+            capText: "Tope máximo: 24 mensualidades",
+            explanation: "Cálculo estándar por despido improcedente post-2012: 33 días de salario por año con un máximo de 24 mensualidades."
+          };
+        }
+      }
+
+      return { amount: 0, rateText: "0 días", capText: "-", explanation: "Sin indemnización aplicable." };
+    }
+
+    function computeFiniquito(endDate, dailySalary, monthlyGross) {
+      // 1. Días trabajados del mes en curso
+      let daysWorkedMonth = endDate.getDate();
+      let pendingSalary = (monthlyGross / 30) * daysWorkedMonth;
+
+      // 2. Vacaciones no disfrutadas (si no es modo completo usa estimación de 5 días)
+      let vacationDays = appState.mode === 'complete' ? appState.vacationDays : 5;
+      let vacationPay = dailySalary * vacationDays;
+
+      // 3. Pagas extra pendientes
+      let extraPayAccrued = 0;
+      if (appState.pagas === 14) {
+        // Estimación aproximada de devengo semestral
+        extraPayAccrued = (monthlyGross / 6) * (daysWorkedMonth / 30);
+      }
+
+      // 4. Preaviso
+      let noticePay = appState.noticeDays * dailySalary;
+
+      let totalFiniquito = pendingSalary + vacationPay + extraPayAccrued + noticePay;
+
+      return {
+        total: Math.round(totalFiniquito * 100) / 100,
+        pendingSalary: Math.round(pendingSalary * 100) / 100,
+        vacationPay: Math.round(vacationPay * 100) / 100,
+        extraPay: Math.round(extraPayAccrued * 100) / 100,
+        noticePay: Math.round(noticePay * 100) / 100
+      };
+    }
+
+    function computeParo(totalCotizadoDays, monthlyGross, children, reason) {
+      if (reason === 'baja_voluntaria') {
+        return {
+          hasRight: false,
+          monthlyPhase1: 0,
+          monthlyPhase2: 0,
+          durationMonths: 0,
+          totalAccumulated: 0,
+          message: "⚠️ La baja voluntaria no da derecho a prestación por desempleo (paro) en el SEPE."
+        };
+      }
+
+      if (totalCotizadoDays < 360) {
+        return {
+          hasRight: false,
+          monthlyPhase1: 0,
+          monthlyPhase2: 0,
+          durationMonths: 0,
+          totalAccumulated: 0,
+          message: "Se requieren al menos 360 días cotizados en los últimos 6 años para acceder al paro contributivo."
+        };
+      }
+
+      // Buscar días de prestación en tabla SEPE
+      let match = LEGAL_CONFIG.sepeTable.find(t => totalCotizadoDays >= t.minDays && totalCotizadoDays <= t.maxDays);
+      let benefitDays = match ? match.benefitDays : 720;
+      let durationMonths = Math.round(benefitDays / 30);
+
+      // Calcular Base Reguladora Mensual (aproximada por el salario bruto)
+      let baseMonthly = monthlyGross;
+
+      // Aplicar porcentajes (70% primeros 180 días, 60% resto)
+      let rawPhase1 = baseMonthly * LEGAL_CONFIG.params.sepeRatePhase1;
+      let rawPhase2 = baseMonthly * LEGAL_CONFIG.params.sepeRatePhase2;
+
+      // Ajustar topes según hijos
+      let minLimit = children > 0 ? LEGAL_CONFIG.params.sepeMinWithChildren : LEGAL_CONFIG.params.sepeMinNoChildren;
+      let maxLimit = LEGAL_CONFIG.params.sepeMaxNoChildren;
+      if (children === 1) maxLimit = LEGAL_CONFIG.params.sepeMax1Child;
+      else if (children >= 2) maxLimit = LEGAL_CONFIG.params.sepeMax2OrMoreChildren;
+
+      let monthlyPhase1 = Math.min(Math.max(rawPhase1, minLimit), maxLimit);
+      let monthlyPhase2 = Math.min(Math.max(rawPhase2, minLimit), maxLimit);
+
+      let totalAccumulated = (monthlyPhase1 * Math.min(6, durationMonths)) + 
+                             (monthlyPhase2 * Math.max(0, durationMonths - 6));
+
+      return {
+        hasRight: true,
+        monthlyPhase1: Math.round(monthlyPhase1 * 100) / 100,
+        monthlyPhase2: Math.round(monthlyPhase2 * 100) / 100,
+        durationMonths: durationMonths,
+        totalAccumulated: Math.round(totalAccumulated * 100) / 100,
+        message: "Estimación calculada según las tablas oficiales del SEPE."
+      };
+    }
+
+    /* ==========================================================================
+       5. RENDERIZACIÓN DE INTERFAZ DE RESULTADOS
+       ========================================================================== */
+    function renderUIResults(indemnity, finiquito, paro, dailySalary, totalDays, totalMonths) {
+      document.getElementById('wizard-container').style.display = 'none';
+      document.getElementById('stepper').style.display = 'none';
+      document.getElementById('results-container').style.display = 'block';
+
+      let directCobroTotal = indemnity.amount + finiquito.total;
+      document.getElementById('total-amount-display').innerText = formatEuro(directCobroTotal);
+
+      // Resumen Cards
+      document.getElementById('indemnity-amount').innerText = formatEuro(indemnity.amount);
+      document.getElementById('indemnity-subtext').innerText = indemnity.rateText;
+
+      document.getElementById('finiquito-amount').innerText = formatEuro(finiquito.total);
+      
+      if (paro.hasRight) {
+        document.getElementById('paro-monthly').innerText = `${formatEuro(paro.monthlyPhase1)}/mes`;
+        document.getElementById('paro-duration').innerText = `Duración: ${paro.durationMonths} meses`;
+      } else {
+        document.getElementById('paro-monthly').innerText = "0,00 €";
+        document.getElementById('paro-duration').innerText = paro.message;
+      }
+
+      // Detalle Tablas Accordion
+      document.getElementById('indemnity-explanation-text').innerText = indemnity.explanation;
+      document.getElementById('td-daily-salary').innerText = formatEuro(dailySalary);
+      document.getElementById('td-seniority').innerText = `${Math.floor(totalMonths/12)} años y ${totalMonths%12} meses (${totalDays} días)`;
+      document.getElementById('td-indemnity-rate').innerText = indemnity.rateText;
+      document.getElementById('td-indemnity-cap').innerText = indemnity.capText;
+
+      document.getElementById('td-pending-salary').innerText = formatEuro(finiquito.pendingSalary);
+      document.getElementById('td-vacation-pay').innerText = formatEuro(finiquito.vacationPay);
+      document.getElementById('td-extra-pay').innerText = formatEuro(finiquito.extraPay);
+      document.getElementById('td-notice-pay').innerText = formatEuro(finiquito.noticePay);
+      document.getElementById('td-finiquito-total').innerText = formatEuro(finiquito.total);
+
+      document.getElementById('paro-explanation-text').innerText = paro.message;
+      document.getElementById('td-cotizacion-days').innerText = `${totalDays} días estimables`;
+      document.getElementById('td-paro-phase1').innerText = formatEuro(paro.monthlyPhase1);
+      document.getElementById('td-paro-phase2').innerText = formatEuro(paro.monthlyPhase2);
+      document.getElementById('td-paro-total-accumulated').innerText = formatEuro(paro.totalAccumulated);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function resetCalculator() {
+      appState.currentStep = 1;
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('wizard-container').style.display = 'block';
+      document.getElementById('stepper').style.display = 'flex';
+      
+      for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`step-${i}`);
+        if (step) step.style.display = i === 1 ? 'block' : 'none';
+      }
+      
+      document.getElementById('btn-prev').style.display = 'none';
+      updateStepperUI();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatEuro(val) {
+      return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
+    }
+  </script>
+</body>
+</html>
