@@ -1,0 +1,169 @@
+<style>
+  .calc-container {
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+  }
+  .calc-step { display: none; }
+  .calc-step.active { display: block; }
+  
+  .calc-label { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; display: block; }
+  .calc-slider { width: 100%; margin: 15px 0; accent-color: #2563eb; }
+  .calc-value-display { font-size: 24px; font-weight: 700; color: #1e293b; text-align: center; }
+  
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .calc-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .calc-card:hover { border-color: #93c5fd; }
+  .calc-card.selected { border-color: #2563eb; background-color: #eff6ff; }
+  
+  .btn-next, .btn-prev {
+    width: 100%;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.2s;
+  }
+  .btn-next:hover { background-color: #1d4ed8; }
+  
+  /* Bloque de Resultado */
+  .result-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 20px;
+    border: 1px solid #cbd5e1;
+  }
+  .result-price { font-size: 36px; font-weight: 800; color: #16a34a; margin: 10px 0; }
+  .breakdown-list { text-align: left; margin-top: 15px; font-size: 14px; color: #334155; }
+  .breakdown-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; }
+</style>
+
+<div class="calc-container">
+  
+  <!-- PASO 1: SALARIO -->
+  <div class="calc-step active" id="step-1">
+    <span class="calc-label">¿Cuál es tu salario bruto mensual?</span>
+    <div class="calc-value-display" id="salary-val">2.000 €</div>
+    <input type="range" min="800" max="8000" value="2000" step="50" class="calc-slider" id="salary-input">
+    
+    <span class="calc-label" style="margin-top: 20px;">Número de pagas al año:</span>
+    <div class="card-grid">
+      <div class="calc-card selected" onclick="setPay(12, this)">12 pagas (Prorrateadas)</div>
+      <div class="calc-card" onclick="setPay(14, this)">14 pagas</div>
+    </div>
+    
+    <button class="btn-next" onclick="nextStep(2)">Siguiente paso →</button>
+  </div>
+
+  <!-- PASO 2: TIPO DE DESPIDO Y TIEMPO -->
+  <div class="calc-step" id="step-2">
+    <span class="calc-label">Años trabajados en la empresa:</span>
+    <div class="calc-value-display" id="years-val">3 años</div>
+    <input type="range" min="1" max="30" value="3" step="1" class="calc-slider" id="years-input">
+
+    <span class="calc-label" style="margin-top: 20px;">Tipo de despido / salida:</span>
+    <div class="card-grid">
+      <div class="calc-card selected" onclick="setType('improcedente', this)">Improcedente<br><small>(33 días/año)</small></div>
+      <div class="calc-card" onclick="setType('objetivo', this)">Objetivo / ERE<br><small>(20 días/año)</small></div>
+    </div>
+
+    <button class="btn-next" onclick="calculateResult()">Calcular mi indemnización</button>
+  </div>
+
+  <!-- PASO 3: RESULTADOS -->
+  <div class="calc-step" id="step-3">
+    <div class="result-box">
+      <span style="font-size: 14px; color: #64748b; font-weight: 600;">TU INDEMNIZACIÓN ESTIMADA ES:</span>
+      <div class="result-price" id="total-result">0 €</div>
+      
+      <div class="breakdown-list">
+        <div class="breakdown-item">
+          <span>Días aplicados:</span>
+          <strong id="days-applied">33 días/año</strong>
+        </div>
+        <div class="breakdown-item">
+          <span>Salario diario estimado:</span>
+          <strong id="daily-salary">0 €</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Espacio optimizado para el anuncio publicitario -->
+    <div style="margin-top: 20px; background: #eee; padding: 10px; text-align: center; border-radius: 8px; font-size: 12px; color: #999;">
+      [ANUNCIO ADSENSE / EZOIC]
+    </div>
+
+    <button class="btn-next" style="background-color: #059669;" onclick="alert('Función para captar email y enviar PDF')">📩 Recibir informe detallado en PDF</button>
+    <button class="btn-prev" style="background-color: transparent; color: #64748b; margin-top: 5px;" onclick="nextStep(1)">← Volver a empezar</button>
+  </div>
+
+</div>
+
+<script>
+  let payCount = 12;
+  let dismissalType = 'improcedente';
+
+  // Actualizar valores de sliders en tiempo real
+  document.getElementById('salary-input').addEventListener('input', (e) => {
+    document.getElementById('salary-val').innerText = parseInt(e.target.value).toLocaleString() + ' €';
+  });
+
+  document.getElementById('years-input').addEventListener('input', (e) => {
+    document.getElementById('years-val').innerText = e.target.value + ' años';
+  });
+
+  function setPay(num, el) {
+    payCount = num;
+    el.parentElement.querySelectorAll('.calc-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function setType(type, el) {
+    dismissalType = type;
+    el.parentElement.querySelectorAll('.calc-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function nextStep(step) {
+    document.querySelectorAll('.calc-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + step).classList.add('active');
+  }
+
+  function calculateResult() {
+    const salary = parseFloat(document.getElementById('salary-input').value);
+    const years = parseFloat(document.getElementById('years-input').value);
+    
+    // Cálculo anualizado
+    const annualSalary = payCount === 14 ? salary * 14 : salary * 12;
+    const dailySalary = annualSalary / 365;
+    
+    const daysPerYear = dismissalType === 'improcedente' ? 33 : 20;
+    let totalIndemnity = dailySalary * daysPerYear * years;
+
+    // Renderizar resultados
+    document.getElementById('daily-salary').innerText = dailySalary.toFixed(2) + ' €';
+    document.getElementById('days-applied').innerText = daysPerYear + ' días/año';
+    document.getElementById('total-result').innerText = Math.round(totalIndemnity).toLocaleString() + ' €';
+    
+    nextStep(3);
+  }
+</script>
