@@ -3,424 +3,421 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cuánto Me Toca | Calculadora Laboral Multiuso</title>
+  <title>Cuánto Me Toca | Calculadora Laboral Paso a Paso</title>
+  <!-- Librería externa para generación limpia de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --bg-color: #f8fafc;
+      --bg-color: #f1f5f9;
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --border: #e2e8f0;
-      --success-bg: #dcfce7;
-      --success-text: #166534;
-      --warning-bg: #fef9c3;
-      --warning-text: #854d0e;
-      --danger-bg: #fee2e2;
-      --danger-text: #991b1b;
+      --border: #cbd5e1;
+      --accent: #10b981;
       --radius: 12px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 20px 12px; }
-    .container { max-width: 900px; margin: 0 auto; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 16px; }
+    .main-wrapper { max-width: 900px; margin: 0 auto; }
 
-    /* Header */
-    header { text-align: center; margin-bottom: 24px; }
-    header h1 { font-size: 2rem; color: var(--primary); margin-bottom: 6px; }
-    header p { color: var(--text-muted); font-size: 0.95rem; }
+    /* Espacios de Publicidad (Monetización) */
+    .ad-slot {
+      background: #e2e8f0; border: 1px dashed #94a3b8; color: #64748b;
+      text-align: center; font-size: 0.8rem; font-weight: 600;
+      border-radius: 8px; margin: 16px 0; display: flex;
+      align-items: center; justify-content: center; min-height: 90px;
+    }
+    .ad-header { min-height: 90px; }
+    .ad-in-step { min-height: 120px; margin: 20px 0; background: #f8fafc; }
 
-    .disclaimer-banner {
-      background: var(--warning-bg); color: var(--warning-text);
-      padding: 12px 16px; border-radius: var(--radius); font-size: 0.85rem;
-      margin-bottom: 24px; border: 1px solid #fef08a; text-align: center;
-    }
+    /* App Header */
+    header { text-align: center; margin-bottom: 20px; }
+    header h1 { font-size: 1.8rem; color: var(--primary); }
+    header p { color: var(--text-muted); font-size: 0.9rem; }
 
-    /* Target Selector Tabs */
-    .tabs-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px; margin-bottom: 24px;
-    }
-    .tab-btn {
-      background: var(--card-bg); border: 2px solid var(--border);
-      padding: 14px 10px; border-radius: var(--radius); cursor: pointer;
-      font-weight: 600; color: var(--text-muted); transition: all 0.2s ease;
-      text-align: center; font-size: 0.9rem;
-    }
-    .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
-    .tab-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+    /* Barra de Progreso */
+    .progress-container { margin-bottom: 24px; }
+    .progress-bar-bg { background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; }
+    .progress-bar-fill { background: var(--primary); height: 100%; width: 20%; transition: width 0.3s ease; }
+    .step-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
 
-    /* Form Container */
-    .calculator-card {
-      background: var(--card-bg); padding: 24px; border-radius: var(--radius);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
-      border: 1px solid var(--border); margin-bottom: 24px;
+    /* Tarjeta del Asistente */
+    .card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border);
     }
-    .form-section-title { font-size: 1.1rem; margin-bottom: 16px; border-bottom: 2px solid var(--bg-color); padding-bottom: 8px; }
+    .step-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; color: var(--primary); }
+    .step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* Formularios */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    
     .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+    .form-group label { font-size: 0.85rem; font-weight: 600; }
     .form-group input, .form-group select {
-      padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
       font-size: 0.95rem; outline: none; transition: border-color 0.2s;
     }
     .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
-    .full-width { grid-column: 1 / -1; }
 
-    /* Badges & Results */
-    .confidence-badge {
-      display: inline-block; padding: 6px 12px; border-radius: 20px;
-      font-size: 0.85rem; font-weight: 700; margin-bottom: 16px;
+    /* Botones de Navegación */
+    .nav-buttons { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+    .btn {
+      padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.95rem;
+      border: none; cursor: pointer; transition: all 0.2s;
     }
-    .badge-high { background: var(--success-bg); color: var(--success-text); }
-    .badge-medium { background: var(--warning-bg); color: var(--warning-text); }
-    .badge-review { background: var(--danger-bg); color: var(--danger-text); }
+    .btn-prev { background: #e2e8f0; color: var(--text-main); }
+    .btn-prev:hover { background: #cbd5e1; }
+    .btn-next { background: var(--primary); color: white; margin-left: auto; }
+    .btn-next:hover { background: var(--primary-hover); }
+    .btn-pdf { background: var(--accent); color: white; width: 100%; margin-top: 16px; padding: 14px; }
+    .btn-pdf:hover { background: #059669; }
 
-    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; }
-    .result-card {
-      background: var(--bg-color); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary);
-    }
-    .result-card h4 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .result-card .value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 4px; }
-
-    /* Legal Explanations Accordion */
-    .legal-box {
-      background: var(--card-bg); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px; font-size: 0.88rem; color: var(--text-muted);
-    }
-    .legal-box h3 { color: var(--text-main); font-size: 1rem; margin-bottom: 8px; }
-    .legal-box ul { padding-left: 20px; margin-top: 8px; }
-    .legal-box li { margin-bottom: 6px; }
+    /* Informe Final (Imprimible) */
+    .report-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .report-header { text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+    .report-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #cbd5e1; font-size: 0.95rem; }
+    .report-row.total { font-weight: 800; font-size: 1.1rem; border-bottom: 2px solid var(--text-main); color: var(--primary); }
 
     .hidden { display: none !important; }
-    button.calc-btn {
-      width: 100%; background: var(--primary); color: white; border: none;
-      padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; margin-top: 16px; transition: background 0.2s;
-    }
-    button.calc-btn:hover { background: var(--primary-hover); }
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="main-wrapper">
+  <!-- BANNER PUBLICIDAD SUPERIOR (728x90 / Adaptable) -->
+  <div class="ad-slot ad-header">
+    <span>ESPACIO PUBLICITARIO (GOOGLE ADSENSE BANNER SUPERIOR)</span>
+  </div>
+
   <header>
-    <h1>Cuánto Me Toca</h1>
-    <p>Calculadora laboral universal para trabajadores y profesionales en España</p>
+    <h1>Calculadora Laboral Inteligente</h1>
+    <p>Calcule su nómina, indemnización, deducciones y líquido disponible paso a paso</p>
   </header>
 
-  <div class="disclaimer-banner">
-    ⚠️ <strong>Aviso Legal:</strong> Los resultados son estimaciones orientativas basadas en el Estatuto de los Trabajadores, la Ley General de la Seguridad Social y la Ley de Enjuiciamiento Civil. No constituyen asesoramiento jurídico vinculante.
+  <!-- Barra de progreso -->
+  <div class="progress-container">
+    <div class="progress-bar-bg">
+      <div id="progress-bar" class="progress-bar-fill"></div>
+    </div>
+    <div class="step-labels">
+      <span>1. Ingresos</span>
+      <span>2. Deducciones</span>
+      <span>3. Extinción/Paro</span>
+      <span>4. Situación</span>
+      <span>5. Informe PDF</span>
+    </div>
   </div>
 
-  <!-- Selector de Objetivo -->
-  <div class="tabs-grid">
-    <button class="tab-btn active" onclick="setModule('finiquito')">💼 Finiquito e Indemnización</button>
-    <button class="tab-btn" onclick="setModule('nomina')">📄 Nómina Neta e IRPF</button>
-    <button class="tab-btn" onclick="setModule('paro')">🏛️ Paro y Subsidios</button>
-    <button class="tab-btn" onclick="setModule('embargo')">⚖️ Embargo de Nómina</button>
-  </div>
-
-  <div class="calculator-card">
-    <!-- Formulario Unificado -->
-    <div id="form-container">
-      <h3 class="form-section-title" id="module-title">Datos para Finiquito e Indemnización</h3>
+  <div class="card">
+    <!-- PASO 1: INGRESOS Y SALARIO BRUTO -->
+    <div id="step-1" class="wizard-step">
+      <div class="step-title">Paso 1: Ingresos y Salario Bruto</div>
+      <div class="step-desc">Introduzca los datos económicos base de su contrato y complementos del mes.</div>
       
       <div class="form-grid">
-        <!-- Campos comunes -->
         <div class="form-group">
-          <label for="salarioBruto">Salario Bruto (€)</label>
-          <input type="number" id="salarioBruto" value="24000" placeholder="Ej. 24000">
+          <label for="salarioBase">Salario Base Bruto (€)</label>
+          <input type="number" id="salarioBase" value="1800" placeholder="Ej. 1800">
         </div>
-
         <div class="form-group">
-          <label for="tipoPeriodo">Periodo de Salario</label>
+          <label for="tipoPeriodo">Frecuencia del Salario</label>
           <select id="tipoPeriodo">
-            <option value="anual">Anual</option>
             <option value="mensual">Mensual</option>
+            <option value="anual">Anual Bruto</option>
           </select>
         </div>
-
         <div class="form-group">
           <label for="numPagas">Número de Pagas</label>
           <select id="numPagas">
-            <option value="12">12 (Extra prorrateada)</option>
-            <option value="14">14 (Pagas separadas)</option>
+            <option value="12">12 pagas (Prorrateadas)</option>
+            <option value="14">14 pagas</option>
           </select>
         </div>
-
-        <!-- Campos Finiquito / Despido -->
-        <div class="form-group mod-finiquito mod-paro">
-          <label for="fechaInicio">Fecha de Inicio de Contrato</label>
-          <input type="date" id="fechaInicio" value="2022-01-01">
+        <div class="form-group">
+          <label for="horasExtras">Horas Extras Realizadas (€)</label>
+          <input type="number" id="horasExtras" value="0" placeholder="Ej. 120">
         </div>
-
-        <div class="form-group mod-finiquito mod-paro">
-          <label for="fechaFin">Fecha de Fin / Despido</label>
-          <input type="date" id="fechaFin">
-        </div>
-
-        <div class="form-group mod-finiquito">
-          <label for="motivoCese">Causa o Motivo de Extinción</label>
-          <select id="motivoCese">
-            <option value="improcedente">Despido Improcedente (33/45 días/año)</option>
-            <option value="objetivo">Despido Objetivo / ERE (20 días/año)</option>
-            <option value="fin_contrato">Fin de Contrato Temporal (12 días/año)</option>
-            <option value="baja_voluntaria">Baja Voluntaria (Sin indemnización)</option>
-            <option value="no_seguro">No estoy seguro / Aún sin carta oficial</option>
-          </select>
-        </div>
-
-        <div class="form-group mod-finiquito">
-          <label for="vacacionesPendientes">Días de Vacaciones No Disfrutadas</label>
-          <input type="number" id="vacacionesPendientes" value="0" placeholder="Ej. 5">
-        </div>
-
-        <div class="form-group mod-finiquito">
-          <label for="bonusPendientes">Bonus / Comisiones Pendientes (€)</label>
-          <input type="number" id="bonusPendientes" value="0" placeholder="Ej. 300">
-        </div>
-
-        <div class="form-group mod-finiquito">
-          <label for="faltaPreaviso">Días de Preaviso Incumplidos (Penalización)</label>
-          <input type="number" id="faltaPreaviso" value="0" placeholder="Ej. 15">
-        </div>
-
-        <!-- Campos Nómina / IRPF -->
-        <div class="form-group mod-nomina">
-          <label for="grupoCotizacion">Grupo / Situación Familiar</label>
-          <select id="situacionFamiliar">
-            <option value="soltero">Soltero/a, divorciado/a o viudo/a</option>
-            <option value="casado">Casado/a con cónyuge sin ingresos > 1.500€</option>
-            <option value="otros">Otros</option>
-          </select>
-        </div>
-
-        <div class="form-group mod-nomina mod-paro mod-embargo">
-          <label for="hijosCargo">Hijos o Personas a Cargo</label>
-          <input type="number" id="hijosCargo" value="0" min="0">
-        </div>
-
-        <!-- Campos Embargo -->
-        <div class="form-group mod-embargo hidden">
-          <label for="importeNominaLiquida">Nómina Líquida o Finiquito a Embargar (€)</label>
-          <input type="number" id="importeNominaLiquida" value="1800" placeholder="Ej. 1800">
+        <div class="form-group">
+          <label for="comisionesBonus">Comisiones y Bonus del Mes (€)</label>
+          <input type="number" id="comisionesBonus" value="0" placeholder="Ej. 300">
         </div>
       </div>
 
-      <button class="calc-btn" onclick="calcular()">Calcular Resultado</button>
+      <!-- PUBLICIDAD INTEGRADA ENTRE PASOS -->
+      <div class="ad-slot ad-in-step">
+        <span>PUBLICIDAD RELEVANTE (NATIVA / IN-FEED)</span>
+      </div>
+    </div>
+
+    <!-- PASO 2: DEDUCCIONES, ANTICIPOS Y RETENCIONES -->
+    <div id="step-2" class="wizard-step hidden">
+      <div class="step-title">Paso 2: Deducciones, Anticipos y Descuentos</div>
+      <div class="step-desc">Indique las retenciones aplicables y cualquier adelanto o gasto variable.</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="porcentajeIrpf">Retención IRPF (%)</label>
+          <input type="number" id="porcentajeIrpf" value="14" step="0.1" placeholder="Ej. 14">
+        </div>
+        <div class="form-group">
+          <label for="cotizacionSS">Cotización Seguridad Social (%)</label>
+          <input type="number" id="cotizacionSS" value="6.35" step="0.01" readonly style="background: #f1f5f9;">
+        </div>
+        <div class="form-group">
+          <label for="anticipos">Anticipos / Adelantos Cobrados (€)</label>
+          <input type="number" id="anticipos" value="0" placeholder="Ej. 200">
+        </div>
+        <div class="form-group">
+          <label for="gastosVariables">Otros Descuentos / Gastos Variables (€)</label>
+          <input type="number" id="gastosVariables" value="0" placeholder="Ej. 50">
+        </div>
+        <div class="form-group">
+          <label for="tieneEmbargo">¿Tiene Embargo Judicial de Nómina?</label>
+          <select id="tieneEmbargo">
+            <option value="no">No</option>
+            <option value="si">Sí (Calcular deducción según LEC 607)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 3: SITUACIÓN LABORAL Y FINIQUITO (OPCIONAL) -->
+    <div id="step-3" class="wizard-step hidden">
+      <div class="step-title">Paso 3: Extinción de Contrato o Despido</div>
+      <div class="step-desc">Rellene este paso solo si está finalizando su relación laboral para calcular indemnización y paro.</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="motivoCese">Causa de Finalización</label>
+          <select id="motivoCese">
+            <option value="ninguno">Ninguna (Solo calcular nómina ordinaria)</option>
+            <option value="improcedente">Despido Improcedente (33 días/año)</option>
+            <option value="objetivo">Despido Objetivo / ERE (20 días/año)</option>
+            <option value="fin_contrato">Fin de Contrato Temporal (12 días/año)</option>
+            <option value="baja_voluntaria">Baja Voluntaria (Sin indemnización)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fechaInicio">Fecha de Inicio de Contrato</label>
+          <input type="date" id="fechaInicio" value="2023-01-01">
+        </div>
+        <div class="form-group">
+          <label for="fechaFin">Fecha de Fin / Despido</label>
+          <input type="date" id="fechaFin">
+        </div>
+        <div class="form-group">
+          <label for="vacaciones">Días de Vacaciones Pendientes</label>
+          <input type="number" id="vacaciones" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 4: DATOS PERSONALES Y FAMILIARES -->
+    <div id="step-4" class="wizard-step hidden">
+      <div class="step-title">Paso 4: Situación Familiar y Prestaciones</div>
+      <div class="step-desc">Estos datos ayudan a ajustar el cálculo del subsidio y mínimos exentos.</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="hijosCargo">Hijos o Dependientes a Cargo</label>
+          <input type="number" id="hijosCargo" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label for="situacionCivil">Estado Civil / Situación Fiscal</label>
+          <select id="situacionCivil">
+            <option value="soltero">Soltero/a o Divorciado/a</option>
+            <option value="casado">Casado/a</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ad-slot ad-in-step">
+        <span>PUBLICIDAD RELEVANTE (BANNER IN-STEP)</span>
+      </div>
+    </div>
+
+    <!-- PASO 5: RESULTADO E INFORME FINAL -->
+    <div id="step-5" class="wizard-step hidden">
+      <div class="step-title">Paso 5: Resumen Detallado e Informe</div>
+      <div class="step-desc">A continuación se muestra el desglose completo estimado. Puede descargarlo en PDF.</div>
+
+      <div id="pdf-report" class="report-box">
+        <div class="report-header">
+          <h2>Informe de Liquidación y Nómina</h2>
+          <p style="font-size: 0.8rem; color: #64748b;">Generado automáticamente | Estimación aproximada según legislación española vigente (SMI / LEC 607 / ET)</p>
+        </div>
+
+        <div id="report-details">
+          <!-- Inyectado dinámicamente -->
+        </div>
+      </div>
+
+      <button class="btn btn-pdf" onclick="descargarPDF()">📄 Descargar Informe Completo en PDF</button>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div class="nav-buttons">
+      <button id="btn-prev" class="btn btn-prev hidden" onclick="navigateStep(-1)">Anterior</button>
+      <button id="btn-next" class="btn btn-next" onclick="navigateStep(1)">Siguiente</button>
     </div>
   </div>
 
-  <!-- Área de Resultados -->
-  <div id="results-container" class="calculator-card hidden">
-    <div id="confidence-badge" class="confidence-badge badge-high">✓ Estimación de Alta Confianza</div>
-    <p id="confidence-notice" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;"></p>
-
-    <div class="results-grid" id="results-grid">
-      <!-- Inyectado dinámicamente -->
-    </div>
-  </div>
-
-  <!-- Explicación Legal Técnicamente Fundada -->
-  <div class="legal-box">
-    <h3>Fuentes Oficiales y Base Legal Aplicada</h3>
-    <ul id="legal-references">
-      <li><strong>Estatuto de los Trabajadores:</strong> Art. 49 (Extinción), Art. 53 y 56 (Indemnizaciones por despido objetivo e improcedente).</li>
-      <li><strong>Ley de Enjuiciamiento Civil (LEC):</strong> Art. 607 (Escala de inembargabilidad de sueldos y salarios basada en el SMI vigente).</li>
-      <li><strong>Ley General de la Seguridad Social:</strong> Art. 268 y ss. (Prestaciones por desempleo y cálculo de la base reguladora).</li>
-      <li><strong>Indicadores Vigentes (2026):</strong> Salario Mínimo Interprofesional (SMI) = 1.184 €/mes (12 pagas). IPREM = 600 €/mes (Subsidio al 80% = 480 €/mes).</li>
-    </ul>
+  <!-- BANNER PUBLICIDAD INFERIOR (FOOTER) -->
+  <div class="ad-slot ad-header" style="margin-top: 24px;">
+    <span>ESPACIO PUBLICITARIO (BANNER INFERIOR AD SENSE)</span>
   </div>
 </div>
 
 <script>
-  let currentModule = 'finiquito';
+  let currentStep = 1;
+  const totalSteps = 5;
 
-  // Configurar fecha por defecto a hoy
+  // Fecha por defecto
   document.getElementById('fechaFin').value = new Date().toISOString().split('T')[0];
 
-  function setModule(mod) {
-    currentModule = mod;
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+  function updateWizardUI() {
+    // Ocultar todos los pasos
+    for (let i = 1; i <= totalSteps; i++) {
+      document.getElementById(`step-${i}`).classList.add('hidden');
+    }
+    // Mostrar el paso actual
+    document.getElementById(`step-${currentStep}`).classList.remove('hidden');
 
-    // Título
-    const titles = {
-      finiquito: 'Datos para Finiquito e Indemnización',
-      nomina: 'Datos para Cálculo de Nómina Neta e IRPF',
-      paro: 'Datos para Prestación por Desempleo (Paro)',
-      embargo: 'Datos para Cálculo de Embargo de Nómina (Art. 607 LEC)'
-    };
-    document.getElementById('module-title').innerText = titles[mod];
+    // Actualizar barra de progreso
+    const percentage = (currentStep / totalSteps) * 100;
+    document.getElementById('progress-bar').style.width = `${percentage}%`;
 
-    // Mostrar/ocultar campos
-    document.querySelectorAll('.form-group').forEach(el => {
-      if (el.classList.contains('mod-' + mod)) {
-        el.classList.remove('hidden');
-      } else if (
-        el.classList.contains('mod-finiquito') || 
-        el.classList.contains('mod-nomina') || 
-        el.classList.contains('mod-paro') || 
-        el.classList.contains('mod-embargo')
-      ) {
-        el.classList.add('hidden');
-      }
-    });
+    // Botones de navegación
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
 
-    document.getElementById('results-container').classList.add('hidden');
-  }
-
-  function calcular() {
-    const resultsGrid = document.getElementById('results-grid');
-    resultsGrid.innerHTML = '';
-
-    const salarioInput = parseFloat(document.getElementById('salarioBruto').value) || 0;
-    const tipoPeriodo = document.getElementById('tipoPeriodo').value;
-    const numPagas = parseInt(document.getElementById('numPagas').value);
-    const salarioAnualBruto = tipoPeriodo === 'anual' ? salarioInput : salarioInput * numPagas;
-    const salarioDiario = salarioAnualBruto / 365;
-
-    let confidenceLevel = { text: '✓ Estimación de Alta Confianza', class: 'badge-high', notice: 'Cálculo directo con parámetros estándar vigentes.' };
-
-    if (currentModule === 'finiquito') {
-      const fechaIni = new Date(document.getElementById('fechaInicio').value);
-      const fechaFin = new Date(document.getElementById('fechaFin').value);
-      const motivo = document.getElementById('motivoCese').value;
-      const vacaciones = parseFloat(document.getElementById('vacacionesPendientes').value) || 0;
-      const bonus = parseFloat(document.getElementById('bonusPendientes').value) || 0;
-      const preaviso = parseFloat(document.getElementById('faltaPreaviso').value) || 0;
-
-      if (isNaN(fechaIni) || isNaN(fechaFin) || fechaFin <= fechaIni) {
-        alert('Por favor, introduce fechas válidas de inicio y fin de contrato.');
-        return;
-      }
-
-      // Antigüedad en días y años
-      const diasTrabajados = Math.ceil((fechaFin - fechaIni) / (1000 * 60 * 60 * 24));
-      const anosTrabajados = diasTrabajados / 365;
-
-      // Cálculo de Indemnización
-      let diasPorAno = 0;
-      let topeMensualidades = 12;
-
-      if (motivo === 'improcedente') {
-        diasPorAno = 33;
-        topeMensualidades = 24;
-      } else if (motivo === 'objetivo') {
-        diasPorAno = 20;
-        topeMensualidades = 12;
-      } else if (motivo === 'fin_contrato') {
-        diasPorAno = 12;
-        topeMensualidades = 12;
-      } else if (motivo === 'no_seguro') {
-        confidenceLevel = { text: '⚠️ Necesita Revisión Profesional', class: 'badge-review', notice: 'Al no tener clara la causa, la indemnización puede variar entre 0€ (voluntaria) y 33 días/año (improcedente).' };
-      }
-
-      let indemnizacion = salarioDiario * diasPorAno * anosTrabajados;
-      const topeMaximo = (salarioAnualBruto / 12) * topeMensualidades;
-      if (indemnizacion > topeMaximo) indemnizacion = topeMaximo;
-
-      // Partes del Finiquito
-      const valorVacaciones = salarioDiario * vacaciones;
-      const deduccionPreaviso = salarioDiario * preaviso;
-      const finiquitoNeto = valorVacaciones + bonus - deduccionPreaviso;
-      const totalACobrar = indemnizacion + finiquitoNeto;
-
-      resultsGrid.innerHTML = `
-        <div class="result-card"><h4>Indemnización Estimada</h4><div class="value">${indemnizacion.toFixed(2)} €</div></div>
-        <div class="result-card"><h4>Finiquito (Vacaciones/Bonus)</h4><div class="value">${finiquitoNeto.toFixed(2)} €</div></div>
-        <div class="result-card"><h4>Total a Percibir</h4><div class="value" style="color: var(--primary);">${totalACobrar.toFixed(2)} €</div></div>
-      `;
-
-    } else if (currentModule === 'nomina') {
-      // Estimación simplificada IRPF + Cotización SS (6.35%)
-      const ssDeduccion = salarioAnualBruto * 0.0635;
-      let irpfRetencion = 0.12; // Tipo medio aproximado básico
-
-      if (salarioAnualBruto > 35200) irpfRetencion = 0.18;
-      if (salarioAnualBruto > 60000) irpfRetencion = 0.26;
-
-      const irpfMonto = salarioAnualBruto * irpfRetencion;
-      const salarioAnualNeto = salarioAnualBruto - ssDeduccion - irpfMonto;
-      const nominaMensualNeta = salarioAnualNeto / numPagas;
-
-      resultsGrid.innerHTML = `
-        <div class="result-card"><h4>Nómina Neta Mensual</h4><div class="value" style="color: var(--primary);">${nominaMensualNeta.toFixed(2)} €</div></div>
-        <div class="result-card"><h4>Retención IRPF Est.</h4><div class="value">${(irpfRetencion * 100).toFixed(1)} %</div></div>
-        <div class="result-card"><h4>Aportación SS Mensual</h4><div class="value">${(ssDeduccion / numPagas).toFixed(2)} €</div></div>
-      `;
-
-    } else if (currentModule === 'paro') {
-      const fechaIni = new Date(document.getElementById('fechaInicio').value);
-      const fechaFin = new Date(document.getElementById('fechaFin').value);
-      const diasCotizados = Math.ceil((fechaFin - fechaIni) / (1000 * 60 * 60 * 24));
-      const hijos = parseInt(document.getElementById('hijosCargo').value) || 0;
-
-      let diasParo = 0;
-      if (diasCotizados >= 360 && diasCotizados < 540) diasParo = 120;
-      else if (diasCotizados >= 540 && diasCotizados < 720) diasParo = 180;
-      else if (diasCotizados >= 720) diasParo = 240; // Escala simplificada
-
-      const baseReguladoraDiaria = salarioDiario;
-      const primerTramoMensual = baseReguladoraDiaria * 0.70 * 30.416; // Primeros 180 días
-      const segundoTramoMensual = baseReguladoraDiaria * 0.60 * 30.416; // Resto
-
-      resultsGrid.innerHTML = `
-        <div class="result-card"><h4>Días de Paro Generados</h4><div class="value">${diasParo} días</div></div>
-        <div class="result-card"><h4>Paro (Meses 1 al 6)</h4><div class="value">${primerTramoMensual.toFixed(2)} €/mes</div></div>
-        <div class="result-card"><h4>Subsidio Posterior (80% IPREM)</h4><div class="value">480.00 €/mes</div></div>
-      `;
-
-    } else if (currentModule === 'embargo') {
-      const liquido = parseFloat(document.getElementById('importeNominaLiquida').value) || 0;
-      const smi = 1184; // SMI 2026 mensual (12 pagas)
-
-      let embargable = 0;
-      if (liquido > smi) {
-        let remanente = liquido - smi;
-        
-        // Tramo 1: Hasta 2º SMI (30%)
-        let t1 = Math.min(remanente, smi);
-        embargable += t1 * 0.30;
-        remanente -= t1;
-
-        // Tramo 2: Hasta 3º SMI (50%)
-        if (remanente > 0) {
-          let t2 = Math.min(remanente, smi);
-          embargable += t2 * 0.50;
-          remanente -= t2;
-        }
-
-        // Tramo 3: Hasta 4º SMI (60%)
-        if (remanente > 0) {
-          let t3 = Math.min(remanente, smi);
-          embargable += t3 * 0.60;
-        }
-      }
-
-      const liquidoTrasEmbargo = liquido - embargable;
-
-      resultsGrid.innerHTML = `
-        <div class="result-card"><h4>Importe Embargable (Art. 607 LEC)</h4><div class="value" style="color: var(--danger-text);">${embargable.toFixed(2)} €</div></div>
-        <div class="result-card"><h4>Líquido A Percibir</h4><div class="value" style="color: var(--primary);">${liquidoTrasEmbargo.toFixed(2)} €</div></div>
-        <div class="result-card"><h4>SMI Inembargable Aplicado</h4><div class="value">${smi.toFixed(2)} €</div></div>
-      `;
+    if (currentStep === 1) {
+      btnPrev.classList.add('hidden');
+    } else {
+      btnPrev.classList.remove('hidden');
     }
 
-    // Actualizar Badge de Confianza
-    const badgeEl = document.getElementById('confidence-badge');
-    badgeEl.className = `confidence-badge ${confidenceLevel.class}`;
-    badgeEl.innerText = confidenceLevel.text;
-    document.getElementById('confidence-notice').innerText = confidenceLevel.notice;
-
-    document.getElementById('results-container').classList.remove('hidden');
+    if (currentStep === totalSteps) {
+      btnNext.classList.add('hidden');
+      calcularTotales();
+    } else {
+      btnNext.classList.remove('hidden');
+      btnNext.innerText = (currentStep === totalSteps - 1) ? 'Ver Resultado Final' : 'Siguiente';
+    }
   }
 
-  // Inicializar módulo por defecto
-  setModule('finiquito');
+  function navigateStep(direction) {
+    if (direction === 1 && currentStep < totalSteps) {
+      currentStep++;
+    } else if (direction === -1 && currentStep > 1) {
+      currentStep--;
+    }
+    updateWizardUI();
+  }
+
+  function calcularTotales() {
+    // Captura de entradas
+    const salarioInput = parseFloat(document.getElementById('salarioBase').value) || 0;
+    const tipoPeriodo = document.getElementById('tipoPeriodo').value;
+    const numPagas = parseInt(document.getElementById('numPagas').value);
+    const horasExtras = parseFloat(document.getElementById('horasExtras').value) || 0;
+    const comisiones = parseFloat(document.getElementById('comisionesBonus').value) || 0;
+
+    const irpfPorcentaje = parseFloat(document.getElementById('porcentajeIrpf').value) || 0;
+    const anticipos = parseFloat(document.getElementById('anticipos').value) || 0;
+    const gastosVariables = parseFloat(document.getElementById('gastosVariables').value) || 0;
+    const tieneEmbargo = document.getElementById('tieneEmbargo').value;
+
+    const motivo = document.getElementById('motivoCese').value;
+    const fechaIni = new Date(document.getElementById('fechaInicio').value);
+    const fechaFin = new Date(document.getElementById('fechaFin').value);
+    const vacaciones = parseFloat(document.getElementById('vacaciones').value) || 0;
+
+    // 1. Cálculo Bruto Mensual
+    let salarioMensualBruto = tipoPeriodo === 'anual' ? (salarioInput / numPagas) : salarioInput;
+    let totalDevengado = salarioMensualBruto + horasExtras + comisiones;
+
+    // 2. Cálculo Deducciones
+    let cuotaSS = totalDevengado * 0.0635; // 6.35% contingencias comunes + desempleo + FP
+    let cuotaIRPF = totalDevengado * (irpfPorcentaje / 100);
+    let subtotalDescuentos = cuotaSS + cuotaIRPF + anticipos + gastosVariables;
+
+    let liquidoNomina = totalDevengado - subtotalDescuentos;
+
+    // 3. Embargo de Nómina (Art. 607 LEC sobre SMI 2026 de 1.184€)
+    let montoEmbargado = 0;
+    const smi = 1184;
+    if (tieneEmbargo === 'si' && liquidoNomina > smi) {
+      let remanente = liquidoNomina - smi;
+      let tramo1 = Math.min(remanente, smi);
+      montoEmbargado += tramo1 * 0.30;
+      remanente -= tramo1;
+      if (remanente > 0) {
+        let tramo2 = Math.min(remanente, smi);
+        montoEmbargado += tramo2 * 0.50;
+      }
+    }
+    liquidoNomina -= montoEmbargado;
+
+    // 4. Indemnización y Finiquito (Si aplica)
+    let indemnizacion = 0;
+    let valorVacaciones = 0;
+    if (motivo !== 'ninguno' && !isNaN(fechaIni) && !isNaN(fechaFin)) {
+      const diasTrabajados = Math.max(1, Math.ceil((fechaFin - fechaIni) / (1000 * 60 * 60 * 24)));
+      const anosTrabajados = diasTrabajados / 365;
+      const salarioDiario = (salarioMensualBruto * numPagas) / 365;
+
+      let diasPorAno = 0;
+      if (motivo === 'improcedente') diasPorAno = 33;
+      else if (motivo === 'objetivo') diasPorAno = 20;
+      else if (motivo === 'fin_contrato') diasPorAno = 12;
+
+      indemnizacion = salarioDiario * diasPorAno * anosTrabajados;
+      valorVacaciones = salarioDiario * vacaciones;
+    }
+
+    const totalFinalCobrar = liquidoNomina + indemnizacion + valorVacaciones;
+
+    // Generar vista HTML del informe
+    const reportHTML = `
+      <div class="report-row"><span>Salario Base Bruto:</span><span>${salarioMensualBruto.toFixed(2)} €</span></div>
+      ${horasExtras > 0 ? `<div class="report-row"><span>Horas Extras:</span><span>+${horasExtras.toFixed(2)} €</span></div>` : ''}
+      ${comisiones > 0 ? `<div class="report-row"><span>Comisiones / Bonus:</span><span>+${comisiones.toFixed(2)} €</span></div>` : ''}
+      <div class="report-row" style="font-weight:600;"><span>Total Bruto Devengado:</span><span>${totalDevengado.toFixed(2)} €</span></div>
+      <br>
+      <div class="report-row"><span>Retención IRPF (${irpfPorcentaje}%):</span><span>-${cuotaIRPF.toFixed(2)} €</span></div>
+      <div class="report-row"><span>Cotización Seg. Social (6.35%):</span><span>-${cuotaSS.toFixed(2)} €</span></div>
+      ${anticipos > 0 ? `<div class="report-row"><span>Anticipos Cobrados:</span><span>-${anticipos.toFixed(2)} €</span></div>` : ''}
+      ${gastosVariables > 0 ? `<div class="report-row"><span>Otros Descuentos/Gastos:</span><span>-${gastosVariables.toFixed(2)} €</span></div>` : ''}
+      ${montoEmbargado > 0 ? `<div class="report-row" style="color:#b91c1c;"><span>Embargo Aplicado (Art. 607 LEC):</span><span>-${montoEmbargado.toFixed(2)} €</span></div>` : ''}
+      <br>
+      <div class="report-row" style="font-weight:600;"><span>Líquido Nómina Mensual:</span><span>${liquidoNomina.toFixed(2)} €</span></div>
+      ${indemnizacion > 0 ? `<div class="report-row"><span>Indemnización por Extinción:</span><span>+${indemnizacion.toFixed(2)} €</span></div>` : ''}
+      ${valorVacaciones > 0 ? `<div class="report-row"><span>Finiquito Vacaciones:</span><span>+${valorVacaciones.toFixed(2)} €</span></div>` : ''}
+      <br>
+      <div class="report-row total"><span>TOTAL NETO ESTIMADO A PERCIBIR:</span><span>${totalFinalCobrar.toFixed(2)} €</span></div>
+    `;
+
+    document.getElementById('report-details').innerHTML = reportHTML;
+  }
+
+  function descargarPDF() {
+    const element = document.getElementById('pdf-report');
+    const opt = {
+      margin:       10,
+      filename:     'Informe_Liquidacion_Laboral.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // Inicialización
+  updateWizardUI();
 </script>
 </body>
 </html>
