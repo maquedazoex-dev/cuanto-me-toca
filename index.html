@@ -2,139 +2,482 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Simulador de Nómina e Incapacidad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>App Laboral</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 15px; background: #f8fafc; color: #1e293b; max-width: 1000px; margin: auto; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
-    .card { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; }
-    h2 { font-size: 1.1rem; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 10px; }
-    label { font-size: 0.8rem; font-weight: bold; display: block; margin-top: 6px; }
-    input, select { width: 100%; padding: 6px; margin-top: 2px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
-    td, th { padding: 6px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-    .r { text-align: right; }
-    .net { background: #dcfce7; font-weight: bold; }
-    .comp { background: #dbeafe; font-weight: bold; }
-    .ip { background: #fef3c7; }
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning-bg: #fef3c7;
+      --warning-text: #92400e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+    body {
+      background-color: #e5e7eb; /* Fondo oscuro para escritorio */
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* Contenedor principal tipo APP */
+    #app-container {
+      width: 100%;
+      max-width: 480px; /* Ancho de móvil en escritorio */
+      background-color: var(--bg-color);
+      min-height: 100vh;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Cabecera superior */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 20px 15px;
+      text-align: center;
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
+    header p { font-size: 0.9rem; opacity: 0.9; }
+
+    /* Aviso */
+    .disclaimer {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      padding: 12px;
+      margin: 15px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      text-align: center;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    /* Contenedor de las vistas */
+    main {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 0 15px 80px 15px; /* Espacio inferior para la barra */
+    }
+
+    /* Vistas / Pestañas */
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Tarjetas de contenido */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 1.2rem;
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--bg-color);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Formularios accesibles */
+    .form-group { margin-bottom: 15px; }
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem; /* Evita el zoom automático en iOS */
+      background-color: #f9fafb;
+      color: var(--text-main);
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: #fff;
+    }
+
+    /* Resultados */
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row span:last-child { font-weight: 600; color: var(--text-main); }
+    
+    .result-total {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 15px;
+      text-align: center;
+      border: 1px solid #bfdbfe;
+    }
+    .result-total span { display: block; font-size: 0.9rem; color: var(--primary-dark); margin-bottom: 5px;}
+    .result-total strong { display: block; font-size: 1.8rem; color: var(--primary); }
+    
+    .result-danger { background: #fef2f2; border-color: #fecaca; }
+    .result-danger span { color: var(--danger); }
+    .result-danger strong { color: var(--danger); }
+
+    /* Barra de navegación inferior (Estilo App) */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 5px 20px 5px; /* Extra padding para el área segura de iPhone */
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    .nav-item {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      width: 25%;
+      padding: 8px 0;
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    .nav-item .icon { font-size: 1.5rem; filter: grayscale(100%); opacity: 0.6; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item.active .icon { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
+    
+    /* Info text */
+    .info-text { font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.4; }
   </style>
 </head>
 <body>
 
-<h1>Simulador Compacto de Nómina e Incapacidad</h1>
+<div id="app-container">
+  <header>
+    <h1>Calculadora Laboral</h1>
+    <p>Rápida, sencilla y actualizada</p>
+  </header>
 
-<div class="grid">
-  <!-- ENTRADAS -->
-  <div class="card">
-    <h2>1. Datos Entrada</h2>
-    <label>Salario Base (€): <input type="number" id="base" value="2000" oninput="calc()"></label>
-    <label>Pagas Extra: 
-      <select id="pagas" onchange="calc()">
-        <option value="12">12 (Prorrateadas)</option>
-        <option value="14">14 (Aparte)</option>
-      </select>
-    </label>
-    <label>Pluses (€): <input type="number" id="pluses" value="150" oninput="calc()"></label>
-    <label>Especies (€): <input type="number" id="especies" value="50" oninput="calc()"></label>
-    <label>Horas Extras Norm. / FM (€):</label>
-    <div style="display:flex; gap:5px;">
-      <input type="number" id="heNorm" value="100" placeholder="Norm" oninput="calc()">
-      <input type="number" id="heFM" value="0" placeholder="FM" oninput="calc()">
+  <main>
+    <div class="disclaimer">
+      ⚠️ Las cantidades son estimaciones aproximadas basadas en normativa legal. Sirve como orientación.
     </div>
-    <label>Contrato: 
-      <select id="contrato" onchange="calc()">
-        <option value="0.0155">Indefinido</option>
-        <option value="0.0160">Temporal</option>
-      </select>
-    </label>
-    <label>IRPF: 
-      <select id="modoIrpf" onchange="calc()">
-        <option value="auto">Automático por Tramos</option>
-        <option value="15">15% Fijo</option>
-      </select>
-    </label>
-    <label>Edad: <input type="number" id="edad" value="45" oninput="calc()"></label>
-  </div>
 
-  <!-- RESULTADOS -->
-  <div class="card">
-    <h2>2. Nómina Trabajador</h2>
-    <table>
-      <tr><td>Bruto Mensual Total</td><td class="r" id="rBruto">0 €</td></tr>
-      <tr><td>BCCC / BCCP</td><td class="r" id="rBases">0 / 0 €</td></tr>
-      <tr><td>SS Trabajador (4.7% CC + Desemp + MEI/FP)</td><td class="r" id="rSsTrab">0 €</td></tr>
-      <tr><td>SS Horas Extras</td><td class="r" id="rSsHe">0 €</td></tr>
-      <tr><td>Retención IRPF (<span id="rIrpfPct">0</span>%)</td><td class="r" id="rIrpf">0 €</td></tr>
-      <tr class="net"><td>NETO A PERCIBIR</td><td class="r" id="rNeto">0 €</td></tr>
-    </table>
+    <!-- VISTA 1: NÓMINA -->
+    <div id="view-nomina" class="page active">
+      <div class="card">
+        <h2 class="card-title">💶 Datos de la Nómina</h2>
+        <div class="form-group"><label>Salario Base Mensual (€)</label><input type="number" id="n_base" value="1800" inputmode="decimal" oninput="calcNomina()"></div>
+        <div class="form-group"><label>Pagas Extraordinarias</label><select id="n_pagas" onchange="calcNomina()"><option value="12">12 (Prorrateadas en el mes)</option><option value="14">14 (Se cobran aparte)</option></select></div>
+        <div class="form-group"><label>Pluses / Comisiones (€)</label><input type="number" id="n_pluses" value="0" inputmode="decimal" oninput="calcNomina()"></div>
+        <div class="form-group"><label>Tipo de Contrato</label><select id="n_contrato" onchange="calcNomina()"><option value="0.0155">Fijo / Indefinido</option><option value="0.0160">Temporal / Duración det.</option></select></div>
+        <div class="form-group"><label>Retención IRPF (%)</label><select id="n_irpf_mode" onchange="calcNomina()"><option value="auto">Automático (Según salario)</option><option value="2">2% (Contrato temporal corto)</option><option value="12">12% (Fijo genérico)</option><option value="15">15% (Fijo genérico)</option></select></div>
+      </div>
 
-    <h2>3. Coste Empresa</h2>
-    <table>
-      <tr><td>SS Empresa (CC 23.6% + Desemp + FOGASA + MEI)</td><td class="r" id="rSsEmp">0 €</td></tr>
-      <tr class="comp"><td>COSTE TOTAL EMPRESA</td><td class="r" id="rCosteEmp">0 €</td></tr>
-    </table>
+      <div class="card">
+        <h2 class="card-title">📊 Tu Nómina Mensual</h2>
+        <div class="result-row"><span>Salario Bruto (Total Devengado)</span><span id="res_n_bruto">0 €</span></div>
+        <div class="result-row"><span>Descuento Seg. Social</span><span id="res_n_ss">0 €</span></div>
+        <div class="result-row"><span>Descuento IRPF</span><span id="res_n_irpf">0 €</span></div>
+        <div class="result-total">
+          <span>SALARIO NETO A COBRAR</span>
+          <strong id="res_n_neto">0 €</strong>
+        </div>
+        <p class="info-text">El coste total que pagará tu empresa por ti a la Seguridad Social es de aprox. <b id="res_n_empresa">0 €</b>/mes.</p>
+      </div>
+    </div>
 
-    <h2>4. Incapacidad Permanente</h2>
-    <table>
-      <tr class="ip"><td>IPT Total (55%)</td><td class="r" id="rIpt">0 €/mes</td></tr>
-      <tr class="ip"><td>IPT Cualificada (75% si &ge;55 años)</td><td class="r" id="rIptCual">0 €/mes</td></tr>
-      <tr class="ip"><td>IP Absoluta (100% Exenta)</td><td class="r" id="rIpa">0 €/mes</td></tr>
-    </table>
-  </div>
+    <!-- VISTA 2: FINIQUITO -->
+    <div id="view-finiquito" class="page">
+      <div class="card">
+        <h2 class="card-title">📝 Datos del Cese / Despido</h2>
+        <div class="form-group"><label>Salario Bruto Anual (€)</label><input type="number" id="f_bruto" value="24000" inputmode="decimal" oninput="calcFiniquito()"></div>
+        <div class="form-group"><label>Fecha de Inicio en la Empresa</label><input type="date" id="f_inicio" value="2022-01-01" oninput="calcFiniquito()"></div>
+        <div class="form-group"><label>Fecha de Fin de Contrato</label><input type="date" id="f_fin" value="2026-09-16" oninput="calcFiniquito()"></div>
+        <div class="form-group"><label>Días de vacaciones sin disfrutar</label><input type="number" id="f_vacaciones" value="5" inputmode="decimal" oninput="calcFiniquito()"></div>
+        <div class="form-group"><label>Motivo de la salida</label>
+          <select id="f_motivo" onchange="calcFiniquito()">
+            <option value="33">Despido Improcedente</option>
+            <option value="20">Despido Objetivo (Causas económicas)</option>
+            <option value="12">Fin de Contrato Temporal</option>
+            <option value="0">Baja Voluntaria (Me voy yo)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">💰 Resultado a Percibir</h2>
+        <div class="result-row"><span>Días trabajados en total</span><span id="res_f_dias">0 días</span></div>
+        <div class="result-row"><span>Valor de vacaciones</span><span id="res_f_vac">0 €</span></div>
+        <div class="result-row"><span>Indemnización por cese</span><span id="res_f_indem">0 €</span></div>
+        <div class="result-total">
+          <span>TOTAL ESTIMADO (Bruto)</span>
+          <strong id="res_f_total">0 €</strong>
+        </div>
+        <p class="info-text">Si es Baja Voluntaria, no tienes derecho a indemnización ni a cobrar el paro, solo a cobrar los días trabajados y vacaciones generadas (Finiquito).</p>
+      </div>
+    </div>
+
+    <!-- VISTA 3: PARO -->
+    <div id="view-paro" class="page">
+      <div class="card">
+        <h2 class="card-title">🏛️ Datos para el SEPE</h2>
+        <div class="form-group"><label>Tiempo cotizado (últimos 6 años)</label>
+          <select id="p_dias" onchange="calcParo()">
+            <option value="0">Menos de 1 año (Sin derecho)</option>
+            <option value="360">Entre 1 y 1,5 años</option>
+            <option value="720">Entre 2 y 2,5 años</option>
+            <option value="1080">Entre 3 y 3,5 años</option>
+            <option value="1800">Entre 5 y 5,5 años</option>
+            <option value="2160">6 años o más (Máximo)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Salario Bruto Mensual Medio (€)</label><input type="number" id="p_base" value="1800" inputmode="decimal" oninput="calcParo()"></div>
+        <div class="form-group"><label>Hijos a cargo</label>
+          <select id="p_hijos" onchange="calcParo()">
+            <option value="0">Ninguno</option>
+            <option value="1">1 hijo</option>
+            <option value="2">2 o más hijos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">📅 Tu Prestación por Desempleo</h2>
+        <div class="result-row"><span>Duración del paro</span><span id="res_p_meses" style="color:var(--primary); font-weight:bold;">0 meses</span></div>
+        <div class="result-row"><span>Del mes 1 al 6 cobrarás (aprox)</span><span id="res_p_tramo1">0 €/mes</span></div>
+        <div class="result-row"><span>Del mes 7 en adelante (aprox)</span><span id="res_p_tramo2">0 €/mes</span></div>
+        <p class="info-text" style="margin-top:15px; background:var(--bg-color); padding:10px; border-radius:8px;">Los importes ya incluyen los topes legales máximos y mínimos del SEPE según tu situación familiar.</p>
+      </div>
+    </div>
+
+    <!-- VISTA 4: EMBARGOS -->
+    <div id="view-embargo" class="page">
+      <div class="card">
+        <h2 class="card-title">⚖️ Embargo de Sueldo (Art. 607)</h2>
+        <div class="form-group"><label>Salario NETO que cobras al mes (€)</label><input type="number" id="e_neto" value="2000" inputmode="decimal" oninput="calcEmbargo()"></div>
+        <p class="info-text" style="margin-bottom:15px;">El cálculo se hace basándose en el Salario Mínimo Interprofesional (SMI). El primer SMI siempre es intocable.</p>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">✂️ Resultado del Embargo</h2>
+        <div class="result-row"><span>Tu sueldo inicial</span><span id="res_e_inicial">0 €</span></div>
+        <div class="result-row"><span>Parte inembargable (Intocable)</span><span id="res_e_inembargable">0 €</span></div>
+        
+        <div class="result-total result-danger">
+          <span>DINERO QUE TE EMBARGAN</span>
+          <strong id="res_e_embargado">0 €</strong>
+        </div>
+
+        <div class="result-total" style="margin-top:10px;">
+          <span>DINERO QUE TE QUEDA EN LA CUENTA</span>
+          <strong id="res_e_liquido">0 €</strong>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- NAVEGACIÓN INFERIOR (ESTILO APP) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchView('nomina', this)">
+      <span class="icon">💶</span>
+      <span>Nómina</span>
+    </button>
+    <button class="nav-item" onclick="switchView('finiquito', this)">
+      <span class="icon">📝</span>
+      <span>Finiquito</span>
+    </button>
+    <button class="nav-item" onclick="switchView('paro', this)">
+      <span class="icon">🏛️</span>
+      <span>Paro</span>
+    </button>
+    <button class="nav-item" onclick="switchView('embargo', this)">
+      <span class="icon">⚖️</span>
+      <span>Embargos</span>
+    </button>
+  </nav>
+
 </div>
 
 <script>
-function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
-
-function calcIrpf(anual) {
-  let t = 0, p = 0, b = [{l:12450,r:0.19},{l:20200,r:0.24},{l:35200,r:0.30},{l:60000,r:0.37},{l:300000,r:0.45},{l:Infinity,r:0.47}];
-  for(let x of b) {
-    if(anual > p) { t += Math.min(anual - p, x.l - p) * x.r; p = x.l; } else break;
+  // --- NAVEGACIÓN ESTILO APP ---
+  function switchView(viewName, btnElement) {
+    // Ocultar todas las páginas
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    // Mostrar la seleccionada
+    document.getElementById('view-' + viewName).classList.add('active');
+    
+    // Cambiar estado activo de los botones
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    btnElement.classList.add('active');
+    
+    // Scroll arriba
+    document.querySelector('main').scrollTo(0,0);
   }
-  return Math.min(Math.max(((Math.max(0, t - 1054.5)) / anual) * 100, 0), 45);
-}
 
-function calc() {
-  let base = getVal('base'), pluses = getVal('pluses'), esp = getVal('especies');
-  let heNorm = getVal('heNorm'), heFM = getVal('heFM'), pagas = parseInt(document.getElementById('pagas').value);
-  let desempTrab = parseFloat(document.getElementById('contrato').value), edad = getVal('edad');
-  
-  let brutoOrd = base + pluses + esp;
-  let brutoTotal = brutoOrd + heNorm + heFM;
-  let bccc = brutoOrd + (pagas === 14 ? (base * 2)/12 : 0);
-  let bccp = bccc + heNorm + heFM;
+  // --- 1. NÓMINA ---
+  function calcNomina() {
+    const base = parseFloat(document.getElementById("n_base").value) || 0;
+    const pluses = parseFloat(document.getElementById("n_pluses").value) || 0;
+    const numPagas = parseInt(document.getElementById("n_pagas").value);
+    const tipoContrato = parseFloat(document.getElementById("n_contrato").value);
+    const irpfMode = document.getElementById("n_irpf_mode").value;
 
-  // Trabajador
-  let ssTrab = (bccc * 0.047) + (bccp * desempTrab) + (bccp * 0.0010) + (bccc * 0.0012);
-  let ssHe = (heNorm * 0.047) + (heFM * 0.02);
-  
-  let anual = brutoTotal * 12 + (pagas === 14 ? base * 2 : 0);
-  let modoIrpf = document.getElementById('modoIrpf').value;
-  let irpfPct = modoIrpf === 'auto' ? calcIrpf(anual) : parseFloat(modoIrpf);
-  let irpfImp = brutoTotal * (irpfPct / 100);
-  let neto = brutoTotal - (ssTrab + ssHe) - irpfImp;
+    const devengosBrutos = base + pluses;
+    const prorrataExtra = (numPagas === 12) ? 0 : (base * 2) / 12; 
+    const bccc = devengosBrutos + prorrataExtra; 
 
-  // Empresa
-  let desempEmp = desempTrab === 0.0155 ? 0.0550 : 0.0670;
-  let ssEmp = (bccc * 0.236) + (bccp * desempEmp) + (bccp * 0.0020) + (bccp * 0.0060) + (bccc * 0.0058) + (bccp * 0.015);
+    // IRPF
+    let irpfPercent = 0;
+    if (irpfMode === "auto") {
+      const brutoAnual = devengosBrutos * numPagas;
+      if (brutoAnual < 15876) irpfPercent = 0;
+      else if (brutoAnual < 20200) irpfPercent = 0.10;
+      else if (brutoAnual < 35200) irpfPercent = 0.15;
+      else if (brutoAnual < 60000) irpfPercent = 0.20;
+      else irpfPercent = 0.30;
+    } else {
+      irpfPercent = parseFloat(irpfMode) / 100;
+    }
+    const retenIrpf = devengosBrutos * irpfPercent;
 
-  // DOM
-  document.getElementById('rBruto').textContent = brutoTotal.toFixed(2) + ' €';
-  document.getElementById('rBases').textContent = bccc.toFixed(0) + ' / ' + bccp.toFixed(0) + ' €';
-  document.getElementById('rSsTrab').textContent = ssTrab.toFixed(2) + ' €';
-  document.getElementById('rSsHe').textContent = ssHe.toFixed(2) + ' €';
-  document.getElementById('rIrpfPct').textContent = irpfPct.toFixed(1);
-  document.getElementById('rIrpf').textContent = irpfImp.toFixed(2) + ' €';
-  document.getElementById('rNeto').textContent = neto.toFixed(2) + ' €';
-  
-  document.getElementById('rSsEmp').textContent = ssEmp.toFixed(2) + ' €';
-  document.getElementById('rCosteEmp').textContent = (brutoTotal + ssEmp).toFixed(2) + ' €';
+    // Seg Social
+    const deduccionesSS = bccc * (0.047 + tipoContrato + 0.001 + 0.0012); 
+    const neto = devengosBrutos - retenIrpf - deduccionesSS;
+    const costeEmpresa = bccc * (0.236 + (tipoContrato === 0.0155 ? 0.055 : 0.067) + 0.006 + 0.002 + 0.0058 + 0.015);
 
-  document.getElementById('rIpt').textContent = (bccp * 0.55).toFixed(2) + ' €';
-  document.getElementById('rIptCual').textContent = (bccp * (edad >= 55 ? 0.75 : 0.55)).toFixed(2) + ' €';
-  document.getElementById('rIpa').textContent = (bccp * 1.00).toFixed(2) + ' €';
-}
+    document.getElementById("res_n_bruto").innerText = devengosBrutos.toFixed(2) + " €";
+    document.getElementById("res_n_ss").innerText = "-" + deduccionesSS.toFixed(2) + " €";
+    document.getElementById("res_n_irpf").innerText = "-" + retenIrpf.toFixed(2) + " €";
+    document.getElementById("res_n_neto").innerText = neto.toFixed(2) + " €";
+    document.getElementById("res_n_empresa").innerText = costeEmpresa.toFixed(2);
+  }
 
-calc();
+  // --- 2. FINIQUITO ---
+  function calcFiniquito() {
+    const brutoAnual = parseFloat(document.getElementById("f_bruto").value) || 0;
+    const dInicio = new Date(document.getElementById("f_inicio").value);
+    const dFin = new Date(document.getElementById("f_fin").value);
+    const diasVacaciones = parseFloat(document.getElementById("f_vacaciones").value) || 0;
+    const multiplicadorMotivo = parseFloat(document.getElementById("f_motivo").value) || 0;
+
+    let diasTrabajados = 0;
+    if (!isNaN(dInicio) && !isNaN(dFin) && dFin > dInicio) {
+      diasTrabajados = Math.ceil(Math.abs(dFin - dInicio) / (1000 * 60 * 60 * 24));
+    }
+
+    const salarioDiario = brutoAnual / 365;
+    const anosTrabajados = diasTrabajados / 365;
+    const valorVacaciones = diasVacaciones * salarioDiario;
+    
+    let indemnizacion = anosTrabajados * multiplicadorMotivo * salarioDiario;
+    let tope = (multiplicadorMotivo === 33) ? (brutoAnual * 2) : brutoAnual;
+    if (indemnizacion > tope) indemnizacion = tope;
+
+    document.getElementById("res_f_dias").innerText = diasTrabajados + " días";
+    document.getElementById("res_f_vac").innerText = valorVacaciones.toFixed(2) + " €";
+    document.getElementById("res_f_indem").innerText = indemnizacion.toFixed(2) + " €";
+    document.getElementById("res_f_total").innerText = (valorVacaciones + indemnizacion).toFixed(2) + " €";
+  }
+
+  // --- 3. PARO ---
+  function calcParo() {
+    const dias = parseFloat(document.getElementById("p_dias").value) || 0;
+    const base = parseFloat(document.getElementById("p_base").value) || 0;
+    const hijos = parseInt(document.getElementById("p_hijos").value);
+
+    let mesesParo = 0;
+    if (dias >= 360) mesesParo = 4;
+    if (dias >= 720) mesesParo = 8;
+    if (dias >= 1080) mesesParo = 12;
+    if (dias >= 1800) mesesParo = 20;
+    if (dias >= 2160) mesesParo = 24;
+
+    const brDiaria = base / 30;
+    let cuantiaMes1a6 = (brDiaria * 0.70) * 30;
+    let cuantiaMes7adelante = (brDiaria * 0.60) * 30; 
+
+    let topeMax = 1225; let topeMin = 560;
+    if (hijos === 1) { topeMax = 1400; topeMin = 749; }
+    if (hijos >= 2) { topeMax = 1575; topeMin = 749; }
+
+    cuantiaMes1a6 = Math.min(Math.max(cuantiaMes1a6, topeMin), topeMax);
+    cuantiaMes7adelante = Math.min(Math.max(cuantiaMes7adelante, topeMin), topeMax);
+
+    if (mesesParo === 0) { cuantiaMes1a6 = 0; cuantiaMes7adelante = 0; }
+
+    document.getElementById("res_p_meses").innerText = mesesParo + " meses";
+    document.getElementById("res_p_tramo1").innerText = cuantiaMes1a6.toFixed(2) + " €";
+    document.getElementById("res_p_tramo2").innerText = cuantiaMes7adelante.toFixed(2) + " €";
+  }
+
+  // --- 4. EMBARGO ---
+  function calcEmbargo() {
+    const neto = parseFloat(document.getElementById("e_neto").value) || 0;
+    const smi = 1134 * (14/12); // SMI mensual prorrateado aprox 1323€ (referencia 2024)
+    
+    let embargado = 0;
+    let remanente = neto;
+
+    if (remanente > smi) {
+      let exceso = remanente - smi;
+      if (exceso > 0) { let tramo = Math.min(exceso, smi); embargado += tramo * 0.30; exceso -= tramo; }
+      if (exceso > 0) { let tramo = Math.min(exceso, smi); embargado += tramo * 0.50; exceso -= tramo; }
+      if (exceso > 0) { let tramo = Math.min(exceso, smi); embargado += tramo * 0.60; exceso -= tramo; }
+      if (exceso > 0) { let tramo = Math.min(exceso, smi); embargado += tramo * 0.75; exceso -= tramo; }
+      if (exceso > 0) { embargado += exceso * 0.90; }
+    }
+
+    const inembargable = Math.min(neto, smi);
+    
+    document.getElementById("res_e_inicial").innerText = neto.toFixed(2) + " €";
+    document.getElementById("res_e_inembargable").innerText = inembargable.toFixed(2) + " €";
+    document.getElementById("res_e_embargado").innerText = embargado.toFixed(2) + " €";
+    document.getElementById("res_e_liquido").innerText = (neto - embargado).toFixed(2) + " €";
+  }
+
+  // Auto-calcular al iniciar
+  window.onload = () => { calcNomina(); calcFiniquito(); calcParo(); calcEmbargo(); };
 </script>
 
 </body>
