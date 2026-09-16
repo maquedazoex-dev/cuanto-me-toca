@@ -3,421 +3,485 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cuánto Me Toca | Calculadora Laboral Paso a Paso</title>
-  <!-- Librería externa para generación limpia de PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <title>Cuánto Me Toca | Calcula lo que podrías cobrar al terminar tu trabajo</title>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #cbd5e1;
-      --accent: #10b981;
-      --radius: 12px;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --bg: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --border: #E5E7EB;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --radius: 16px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding: 16px; }
-    .main-wrapper { max-width: 900px; margin: 0 auto; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
 
-    /* Espacios de Publicidad (Monetización) */
-    .ad-slot {
-      background: #e2e8f0; border: 1px dashed #94a3b8; color: #64748b;
-      text-align: center; font-size: 0.8rem; font-weight: 600;
-      border-radius: 8px; margin: 16px 0; display: flex;
-      align-items: center; justify-content: center; min-height: 90px;
-    }
-    .ad-header { min-height: 90px; }
-    .ad-in-step { min-height: 120px; margin: 20px 0; background: #f8fafc; }
-
-    /* App Header */
-    header { text-align: center; margin-bottom: 20px; }
-    header h1 { font-size: 1.8rem; color: var(--primary); }
-    header p { color: var(--text-muted); font-size: 0.9rem; }
+    /* Cabecera */
+    header { text-align: center; margin-bottom: 30px; }
+    header h1 { font-size: 2.2rem; color: var(--primary); font-weight: 800; letter-spacing: -0.5px; }
+    header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 5px; }
 
     /* Barra de Progreso */
-    .progress-container { margin-bottom: 24px; }
-    .progress-bar-bg { background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; }
-    .progress-bar-fill { background: var(--primary); height: 100%; width: 20%; transition: width 0.3s ease; }
-    .step-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+    .progress-bar { display: flex; gap: 8px; margin-bottom: 30px; }
+    .step-indicator { flex: 1; height: 8px; background: var(--border); border-radius: 4px; transition: 0.3s; }
+    .step-indicator.active { background: var(--primary); }
+    .step-indicator.completed { background: var(--success); }
 
-    /* Tarjeta del Asistente */
-    .card {
-      background: var(--card-bg); border-radius: var(--radius); padding: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border);
-    }
-    .step-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; color: var(--primary); }
-    .step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; }
+    /* Tarjetas del Asistente */
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+    .step-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+    .step-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .question-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+    .question-desc { color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem; }
 
     /* Formularios */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; }
-    .form-group input, .form-group select {
-      padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 0.95rem; outline: none; transition: border-color 0.2s;
-    }
-    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media(min-width: 600px) { .form-grid.two-cols { grid-template-columns: 1fr 1fr; } }
+    
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-weight: 600; font-size: 0.95rem; }
+    input, select { padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 1rem; outline: none; transition: 0.2s; background: #fff; }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    
+    /* Opciones tipo botón */
+    .radio-group { display: grid; gap: 12px; }
+    .radio-card { border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
+    .radio-card:hover { border-color: var(--primary-hover); background: #F5F3FF; }
+    .radio-card.selected { border-color: var(--primary); background: #EEF2FF; box-shadow: inset 0 0 0 1px var(--primary); }
+    .radio-card input { display: none; }
+    .radio-card .title { font-weight: 600; font-size: 1.05rem; display: block; }
+    .radio-card .desc { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* Botones de Navegación */
-    .nav-buttons { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
-    .btn {
-      padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 0.95rem;
-      border: none; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-prev { background: #e2e8f0; color: var(--text-main); }
-    .btn-prev:hover { background: #cbd5e1; }
+    /* Botones Navegación */
+    .nav-buttons { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .btn { padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-prev { background: #F3F4F6; color: var(--text-main); }
+    .btn-prev:hover { background: #E5E7EB; }
     .btn-next { background: var(--primary); color: white; margin-left: auto; }
     .btn-next:hover { background: var(--primary-hover); }
-    .btn-pdf { background: var(--accent); color: white; width: 100%; margin-top: 16px; padding: 14px; }
-    .btn-pdf:hover { background: #059669; }
 
-    /* Informe Final (Imprimible) */
-    .report-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
-    .report-header { text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
-    .report-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #cbd5e1; font-size: 0.95rem; }
-    .report-row.total { font-weight: 800; font-size: 1.1rem; border-bottom: 2px solid var(--text-main); color: var(--primary); }
+    /* Resultados */
+    .result-header { text-align: center; padding: 20px; background: var(--primary); color: white; border-radius: 12px; margin-bottom: 24px; }
+    .result-header h2 { font-size: 1.2rem; font-weight: 600; opacity: 0.9; }
+    .result-header .total-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin: 10px 0; }
+    
+    .confidence-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; }
+    .confidence-high { background: #D1FAE5; color: #065F46; }
+    .confidence-medium { background: #FEF3C7; color: #92400E; }
 
-    .hidden { display: none !important; }
+    .breakdown-grid { display: grid; gap: 16px; margin-bottom: 24px; }
+    @media(min-width: 600px) { .breakdown-grid { grid-template-columns: 1fr 1fr; } }
+    .breakdown-card { background: #F9FAFB; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .breakdown-card h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--text-main); }
+    .breakdown-amount { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .breakdown-list { list-style: none; font-size: 0.85rem; color: var(--text-muted); }
+    .breakdown-list li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #E5E7EB; }
+    
+    .legal-sources { margin-top: 30px; font-size: 0.8rem; color: var(--text-muted); padding: 16px; background: #F3F4F6; border-radius: 8px; }
+    .legal-sources h4 { margin-bottom: 8px; color: var(--text-main); }
+    .legal-sources ul { padding-left: 20px; margin-bottom: 8px; }
+
+    .ad-slot { background: #E5E7EB; border: 2px dashed #9CA3AF; color: #6B7280; text-align: center; padding: 20px; border-radius: 8px; margin: 20px 0; font-size: 0.85rem; }
   </style>
 </head>
 <body>
 
-<div class="main-wrapper">
-  <!-- BANNER PUBLICIDAD SUPERIOR (728x90 / Adaptable) -->
-  <div class="ad-slot ad-header">
-    <span>ESPACIO PUBLICITARIO (GOOGLE ADSENSE BANNER SUPERIOR)</span>
-  </div>
+<div class="container">
+  <div class="ad-slot">Espacio para Publicidad (Top Banner)</div>
 
   <header>
-    <h1>Calculadora Laboral Inteligente</h1>
-    <p>Calcule su nómina, indemnización, deducciones y líquido disponible paso a paso</p>
+    <h1>Cuánto Me Toca</h1>
+    <p>Calcula tu indemnización, finiquito y paro. Todo explicado de forma sencilla.</p>
   </header>
 
-  <!-- Barra de progreso -->
-  <div class="progress-container">
-    <div class="progress-bar-bg">
-      <div id="progress-bar" class="progress-bar-fill"></div>
-    </div>
-    <div class="step-labels">
-      <span>1. Ingresos</span>
-      <span>2. Deducciones</span>
-      <span>3. Extinción/Paro</span>
-      <span>4. Situación</span>
-      <span>5. Informe PDF</span>
-    </div>
+  <div class="progress-bar" id="progress-bar">
+    <!-- Generado por JS -->
   </div>
 
-  <div class="card">
-    <!-- PASO 1: INGRESOS Y SALARIO BRUTO -->
-    <div id="step-1" class="wizard-step">
-      <div class="step-title">Paso 1: Ingresos y Salario Bruto</div>
-      <div class="step-desc">Introduzca los datos económicos base de su contrato y complementos del mes.</div>
-      
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="salarioBase">Salario Base Bruto (€)</label>
-          <input type="number" id="salarioBase" value="1800" placeholder="Ej. 1800">
-        </div>
-        <div class="form-group">
-          <label for="tipoPeriodo">Frecuencia del Salario</label>
-          <select id="tipoPeriodo">
-            <option value="mensual">Mensual</option>
-            <option value="anual">Anual Bruto</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="numPagas">Número de Pagas</label>
-          <select id="numPagas">
-            <option value="12">12 pagas (Prorrateadas)</option>
-            <option value="14">14 pagas</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="horasExtras">Horas Extras Realizadas (€)</label>
-          <input type="number" id="horasExtras" value="0" placeholder="Ej. 120">
-        </div>
-        <div class="form-group">
-          <label for="comisionesBonus">Comisiones y Bonus del Mes (€)</label>
-          <input type="number" id="comisionesBonus" value="0" placeholder="Ej. 300">
-        </div>
-      </div>
-
-      <!-- PUBLICIDAD INTEGRADA ENTRE PASOS -->
-      <div class="ad-slot ad-in-step">
-        <span>PUBLICIDAD RELEVANTE (NATIVA / IN-FEED)</span>
+  <div class="card" id="wizard-container">
+    
+    <!-- PASO 1: MOTIVO -->
+    <div class="step-content active" data-step="1">
+      <div class="question-title">¿Qué ha pasado con tu trabajo?</div>
+      <div class="question-desc">Cuéntanos cómo termina tu relación laboral para saber qué cálculos aplicar.</div>
+      <div class="radio-group">
+        <label class="radio-card">
+          <input type="radio" name="motivo" value="despido_improcedente">
+          <div><span class="title">Me han despedido (Sin causa justificada)</span><span class="desc">Suele ser el despido improcedente.</span></div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="motivo" value="despido_objetivo">
+          <div><span class="title">Despido por causas de la empresa (Objetivo / ERE)</span><span class="desc">Causas económicas, organizativas, etc.</span></div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="motivo" value="fin_contrato">
+          <div><span class="title">Se termina mi contrato temporal</span><span class="desc">Llegó la fecha de fin o terminó la obra.</span></div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="motivo" value="baja_voluntaria">
+          <div><span class="title">Quiero dejar mi trabajo (Baja voluntaria)</span><span class="desc">Renuncias por decisión propia.</span></div>
+        </label>
       </div>
     </div>
 
-    <!-- PASO 2: DEDUCCIONES, ANTICIPOS Y RETENCIONES -->
-    <div id="step-2" class="wizard-step hidden">
-      <div class="step-title">Paso 2: Deducciones, Anticipos y Descuentos</div>
-      <div class="step-desc">Indique las retenciones aplicables y cualquier adelanto o gasto variable.</div>
+    <!-- PASO 2: FECHAS -->
+    <div class="step-content" data-step="2">
+      <div class="question-title">¿Cuánto tiempo llevas en la empresa?</div>
+      <div class="question-desc">Las fechas son cruciales. Especialmente si empezaste antes de 2012.</div>
+      <div class="form-grid two-cols">
+        <div class="form-group">
+          <label>¿Cuándo empezaste a trabajar?</label>
+          <input type="date" id="fecha_inicio" required>
+        </div>
+        <div class="form-group">
+          <label>¿Cuándo es tu último día?</label>
+          <input type="date" id="fecha_fin" required>
+        </div>
+      </div>
+    </div>
 
-      <div class="form-grid">
+    <!-- PASO 3: SALARIO -->
+    <div class="step-content" data-step="3">
+      <div class="question-title">Hablemos de tu nómina</div>
+      <div class="question-desc">Introduce tus datos económicos para calcular el salario diario y la base del paro.</div>
+      <div class="form-grid two-cols">
         <div class="form-group">
-          <label for="porcentajeIrpf">Retención IRPF (%)</label>
-          <input type="number" id="porcentajeIrpf" value="14" step="0.1" placeholder="Ej. 14">
+          <label>Salario Bruto Mensual (€)</label>
+          <input type="number" id="salario_mes" placeholder="Ej: 1500" required>
         </div>
         <div class="form-group">
-          <label for="cotizacionSS">Cotización Seguridad Social (%)</label>
-          <input type="number" id="cotizacionSS" value="6.35" step="0.01" readonly style="background: #f1f5f9;">
+          <label>¿Cuántas pagas tienes al año?</label>
+          <select id="pagas">
+            <option value="12">12 pagas (Extras prorrateadas)</option>
+            <option value="14">14 pagas (2 pagas extra enteras)</option>
+          </select>
         </div>
         <div class="form-group">
-          <label for="anticipos">Anticipos / Adelantos Cobrados (€)</label>
-          <input type="number" id="anticipos" value="0" placeholder="Ej. 200">
+          <label>Días de vacaciones no disfrutados este año</label>
+          <input type="number" id="vacaciones" value="0" placeholder="Ej: 5">
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 4: SITUACIÓN PERSONAL (PARO Y EMBARGOS) -->
+    <div class="step-content" data-step="4">
+      <div class="question-title">Situación personal</div>
+      <div class="question-desc">Solo un par de detalles más para calcular los límites del paro y posibles retenciones.</div>
+      <div class="form-grid two-cols">
+        <div class="form-group">
+          <label>¿Tienes hijos menores a cargo?</label>
+          <select id="hijos">
+            <option value="0">Ninguno</option>
+            <option value="1">1 hijo</option>
+            <option value="2">2 o más hijos</option>
+          </select>
         </div>
         <div class="form-group">
-          <label for="gastosVariables">Otros Descuentos / Gastos Variables (€)</label>
-          <input type="number" id="gastosVariables" value="0" placeholder="Ej. 50">
-        </div>
-        <div class="form-group">
-          <label for="tieneEmbargo">¿Tiene Embargo Judicial de Nómina?</label>
-          <select id="tieneEmbargo">
+          <label>¿Tienes algún embargo de nómina activo?</label>
+          <select id="embargo">
             <option value="no">No</option>
-            <option value="si">Sí (Calcular deducción según LEC 607)</option>
+            <option value="si">Sí, tengo un embargo judicial</option>
           </select>
         </div>
       </div>
+      <div class="ad-slot" style="margin-top: 20px;">Espacio Publicitario Nativo</div>
     </div>
 
-    <!-- PASO 3: SITUACIÓN LABORAL Y FINIQUITO (OPCIONAL) -->
-    <div id="step-3" class="wizard-step hidden">
-      <div class="step-title">Paso 3: Extinción de Contrato o Despido</div>
-      <div class="step-desc">Rellene este paso solo si está finalizando su relación laboral para calcular indemnización y paro.</div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="motivoCese">Causa de Finalización</label>
-          <select id="motivoCese">
-            <option value="ninguno">Ninguna (Solo calcular nómina ordinaria)</option>
-            <option value="improcedente">Despido Improcedente (33 días/año)</option>
-            <option value="objetivo">Despido Objetivo / ERE (20 días/año)</option>
-            <option value="fin_contrato">Fin de Contrato Temporal (12 días/año)</option>
-            <option value="baja_voluntaria">Baja Voluntaria (Sin indemnización)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="fechaInicio">Fecha de Inicio de Contrato</label>
-          <input type="date" id="fechaInicio" value="2023-01-01">
-        </div>
-        <div class="form-group">
-          <label for="fechaFin">Fecha de Fin / Despido</label>
-          <input type="date" id="fechaFin">
-        </div>
-        <div class="form-group">
-          <label for="vacaciones">Días de Vacaciones Pendientes</label>
-          <input type="number" id="vacaciones" value="0">
-        </div>
-      </div>
+    <!-- PASO 5: RESULTADOS -->
+    <div class="step-content" data-step="5" id="resultados-container">
+      <!-- Se llena por JS -->
     </div>
 
-    <!-- PASO 4: DATOS PERSONALES Y FAMILIARES -->
-    <div id="step-4" class="wizard-step hidden">
-      <div class="step-title">Paso 4: Situación Familiar y Prestaciones</div>
-      <div class="step-desc">Estos datos ayudan a ajustar el cálculo del subsidio y mínimos exentos.</div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="hijosCargo">Hijos o Dependientes a Cargo</label>
-          <input type="number" id="hijosCargo" value="0" min="0">
-        </div>
-        <div class="form-group">
-          <label for="situacionCivil">Estado Civil / Situación Fiscal</label>
-          <select id="situacionCivil">
-            <option value="soltero">Soltero/a o Divorciado/a</option>
-            <option value="casado">Casado/a</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="ad-slot ad-in-step">
-        <span>PUBLICIDAD RELEVANTE (BANNER IN-STEP)</span>
-      </div>
+    <!-- Controles de navegación -->
+    <div class="nav-buttons" id="nav-controls">
+      <button class="btn btn-prev" id="btn-prev" onclick="changeStep(-1)" style="display:none;">Volver</button>
+      <button class="btn btn-next" id="btn-next" onclick="changeStep(1)">Siguiente paso</button>
     </div>
 
-    <!-- PASO 5: RESULTADO E INFORME FINAL -->
-    <div id="step-5" class="wizard-step hidden">
-      <div class="step-title">Paso 5: Resumen Detallado e Informe</div>
-      <div class="step-desc">A continuación se muestra el desglose completo estimado. Puede descargarlo en PDF.</div>
-
-      <div id="pdf-report" class="report-box">
-        <div class="report-header">
-          <h2>Informe de Liquidación y Nómina</h2>
-          <p style="font-size: 0.8rem; color: #64748b;">Generado automáticamente | Estimación aproximada según legislación española vigente (SMI / LEC 607 / ET)</p>
-        </div>
-
-        <div id="report-details">
-          <!-- Inyectado dinámicamente -->
-        </div>
-      </div>
-
-      <button class="btn btn-pdf" onclick="descargarPDF()">📄 Descargar Informe Completo en PDF</button>
-    </div>
-
-    <!-- Botones de navegación -->
-    <div class="nav-buttons">
-      <button id="btn-prev" class="btn btn-prev hidden" onclick="navigateStep(-1)">Anterior</button>
-      <button id="btn-next" class="btn btn-next" onclick="navigateStep(1)">Siguiente</button>
-    </div>
-  </div>
-
-  <!-- BANNER PUBLICIDAD INFERIOR (FOOTER) -->
-  <div class="ad-slot ad-header" style="margin-top: 24px;">
-    <span>ESPACIO PUBLICITARIO (BANNER INFERIOR AD SENSE)</span>
   </div>
 </div>
 
 <script>
+  /* ==========================================
+     1. ARQUITECTURA LEGAL CENTRALIZADA
+     ========================================== */
+  const LegalConfig = {
+    actualizacion: "Enero 2024",
+    SMI_mensual: 1134, // Salario Mínimo Interprofesional 2024 (14 pagas)
+    IPREM_mensual: 600, // IPREM 2024
+    fecha_reforma_laboral: new Date("2012-02-12"), // Clave para cálculo de indemnización
+    
+    // Límites de prestación por desempleo (Paro) - Importes brutos 2024
+    paro_limites: {
+      minimo_sin_hijos: 560,     // 80% IPREM + 1/6
+      minimo_con_hijos: 749,     // 107% IPREM + 1/6
+      maximo_sin_hijos: 1225,    // 175% IPREM + 1/6
+      maximo_1_hijo: 1400,       // 200% IPREM + 1/6
+      maximo_2_hijos: 1575       // 225% IPREM + 1/6
+    },
+
+    // Tabla SEPE simplificada: [días cotizados min, días cotizados max, días de paro]
+    tabla_sepe: [
+      { min: 360, max: 539, paro: 120 }, { min: 540, max: 719, paro: 180 },
+      { min: 720, max: 899, paro: 240 }, { min: 900, max: 1079, paro: 300 },
+      { min: 1080, max: 1259, paro: 360 }, { min: 1260, max: 1439, paro: 420 },
+      { min: 1440, max: 1619, paro: 480 }, { min: 1620, max: 1799, paro: 540 },
+      { min: 1800, max: 1979, paro: 600 }, { min: 1980, max: 2159, paro: 660 },
+      { min: 2160, max: 99999, paro: 720 } // Máximo 2 años
+    ],
+
+    // Escala inembargabilidad (LEC 607)
+    tramos_embargo: [0.30, 0.50, 0.60, 0.75, 0.90] // % embargable por tramos del SMI
+  };
+
+  /* ==========================================
+     2. LÓGICA DE NAVEGACIÓN Y WIZARD
+     ========================================== */
   let currentStep = 1;
   const totalSteps = 5;
 
-  // Fecha por defecto
-  document.getElementById('fechaFin').value = new Date().toISOString().split('T')[0];
+  // Renderizar barra de progreso
+  const progressContainer = document.getElementById('progress-bar');
+  for(let i=1; i<totalSteps; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'step-indicator';
+    dot.id = `dot-${i}`;
+    progressContainer.appendChild(dot);
+  }
+  updateProgress();
 
-  function updateWizardUI() {
-    // Ocultar todos los pasos
-    for (let i = 1; i <= totalSteps; i++) {
-      document.getElementById(`step-${i}`).classList.add('hidden');
+  // Gestión de selección de Radio Buttons
+  document.querySelectorAll('.radio-card').forEach(card => {
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      this.classList.add('selected');
+      this.querySelector('input').checked = true;
+    });
+  });
+
+  function changeStep(direction) {
+    // Validaciones básicas
+    if(direction === 1) {
+      if(currentStep === 1 && !document.querySelector('input[name="motivo"]:checked')) return alert("Por favor, selecciona un motivo.");
+      if(currentStep === 2 && (!document.getElementById('fecha_inicio').value || !document.getElementById('fecha_fin').value)) return alert("Por favor, completa las fechas.");
+      if(currentStep === 3 && !document.getElementById('salario_mes').value) return alert("Por favor, introduce tu salario.");
     }
-    // Mostrar el paso actual
-    document.getElementById(`step-${currentStep}`).classList.remove('hidden');
 
-    // Actualizar barra de progreso
-    const percentage = (currentStep / totalSteps) * 100;
-    document.getElementById('progress-bar').style.width = `${percentage}%`;
-
-    // Botones de navegación
-    const btnPrev = document.getElementById('btn-prev');
-    const btnNext = document.getElementById('btn-next');
-
-    if (currentStep === 1) {
-      btnPrev.classList.add('hidden');
-    } else {
-      btnPrev.classList.remove('hidden');
-    }
-
+    document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.remove('active');
+    currentStep += direction;
+    
     if (currentStep === totalSteps) {
-      btnNext.classList.add('hidden');
-      calcularTotales();
+      calcularTodo();
+      document.getElementById('nav-controls').style.display = 'none'; // Ocultar botones en resultados
     } else {
-      btnNext.classList.remove('hidden');
-      btnNext.innerText = (currentStep === totalSteps - 1) ? 'Ver Resultado Final' : 'Siguiente';
+      document.getElementById('btn-prev').style.display = currentStep === 1 ? 'none' : 'block';
+      document.getElementById('btn-next').innerText = currentStep === totalSteps - 1 ? 'Calcular Resultados' : 'Siguiente paso';
+    }
+
+    document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.add('active');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    for(let i=1; i<totalSteps; i++) {
+      const dot = document.getElementById(`dot-${i}`);
+      dot.className = 'step-indicator';
+      if(i < currentStep) dot.classList.add('completed');
+      if(i === currentStep) dot.classList.add('active');
     }
   }
 
-  function navigateStep(direction) {
-    if (direction === 1 && currentStep < totalSteps) {
-      currentStep++;
-    } else if (direction === -1 && currentStep > 1) {
-      currentStep--;
+  /* ==========================================
+     3. MOTOR DE CÁLCULO LABORAL
+     ========================================== */
+  function calcularTodo() {
+    // Recoger datos del usuario
+    const motivo = document.querySelector('input[name="motivo"]:checked').value;
+    const fInicio = new Date(document.getElementById('fecha_inicio').value);
+    const fFin = new Date(document.getElementById('fecha_fin').value);
+    const salarioMes = parseFloat(document.getElementById('salario_mes').value);
+    const pagas = parseInt(document.getElementById('pagas').value);
+    const vacaciones = parseInt(document.getElementById('vacaciones').value) || 0;
+    const hijos = parseInt(document.getElementById('hijos').value);
+    const tieneEmbargo = document.getElementById('embargo').value === 'si';
+
+    // 1. Cálculos Base
+    const salarioAnual = salarioMes * pagas;
+    const salarioDiario = salarioAnual / 365;
+    
+    const unDia = 1000 * 60 * 60 * 24;
+    const diasTrabajadosTotales = Math.floor((fFin - fInicio) / unDia) + 1;
+    const añosTrabajados = diasTrabajadosTotales / 365;
+
+    // 2. Cálculo de Indemnización (Complejidad Reforma 2012)
+    let indemnizacion = 0;
+    let explicacionIndem = "";
+
+    if (motivo === 'baja_voluntaria') {
+      indemnizacion = 0;
+      explicacionIndem = "La baja voluntaria no genera derecho a indemnización legal.";
+    } 
+    else if (motivo === 'fin_contrato') {
+      indemnizacion = (12 * salarioDiario) * añosTrabajados; // 12 días por año
+      explicacionIndem = `Para fin de contrato temporal corresponden 12 días por año trabajado.`;
     }
-    updateWizardUI();
-  }
-
-  function calcularTotales() {
-    // Captura de entradas
-    const salarioInput = parseFloat(document.getElementById('salarioBase').value) || 0;
-    const tipoPeriodo = document.getElementById('tipoPeriodo').value;
-    const numPagas = parseInt(document.getElementById('numPagas').value);
-    const horasExtras = parseFloat(document.getElementById('horasExtras').value) || 0;
-    const comisiones = parseFloat(document.getElementById('comisionesBonus').value) || 0;
-
-    const irpfPorcentaje = parseFloat(document.getElementById('porcentajeIrpf').value) || 0;
-    const anticipos = parseFloat(document.getElementById('anticipos').value) || 0;
-    const gastosVariables = parseFloat(document.getElementById('gastosVariables').value) || 0;
-    const tieneEmbargo = document.getElementById('tieneEmbargo').value;
-
-    const motivo = document.getElementById('motivoCese').value;
-    const fechaIni = new Date(document.getElementById('fechaInicio').value);
-    const fechaFin = new Date(document.getElementById('fechaFin').value);
-    const vacaciones = parseFloat(document.getElementById('vacaciones').value) || 0;
-
-    // 1. Cálculo Bruto Mensual
-    let salarioMensualBruto = tipoPeriodo === 'anual' ? (salarioInput / numPagas) : salarioInput;
-    let totalDevengado = salarioMensualBruto + horasExtras + comisiones;
-
-    // 2. Cálculo Deducciones
-    let cuotaSS = totalDevengado * 0.0635; // 6.35% contingencias comunes + desempleo + FP
-    let cuotaIRPF = totalDevengado * (irpfPorcentaje / 100);
-    let subtotalDescuentos = cuotaSS + cuotaIRPF + anticipos + gastosVariables;
-
-    let liquidoNomina = totalDevengado - subtotalDescuentos;
-
-    // 3. Embargo de Nómina (Art. 607 LEC sobre SMI 2026 de 1.184€)
-    let montoEmbargado = 0;
-    const smi = 1184;
-    if (tieneEmbargo === 'si' && liquidoNomina > smi) {
-      let remanente = liquidoNomina - smi;
-      let tramo1 = Math.min(remanente, smi);
-      montoEmbargado += tramo1 * 0.30;
-      remanente -= tramo1;
-      if (remanente > 0) {
-        let tramo2 = Math.min(remanente, smi);
-        montoEmbargado += tramo2 * 0.50;
+    else if (motivo === 'despido_objetivo') {
+      indemnizacion = (20 * salarioDiario) * añosTrabajados;
+      let tope = salarioAnual; // Máximo 12 mensualidades
+      if(indemnizacion > tope) indemnizacion = tope;
+      explicacionIndem = `Despido objetivo: 20 días por año (tope 12 mensualidades).`;
+    }
+    else if (motivo === 'despido_improcedente') {
+      // Lógica partida Reforma 2012
+      if (fInicio < LegalConfig.fecha_reforma_laboral) {
+        const diasTramo1 = Math.floor((LegalConfig.fecha_reforma_laboral - fInicio) / unDia);
+        const diasTramo2 = Math.floor((fFin - LegalConfig.fecha_reforma_laboral) / unDia);
+        
+        let indem1 = (diasTramo1 / 365) * 45 * salarioDiario;
+        let indem2 = (diasTramo2 / 365) * 33 * salarioDiario;
+        
+        indemnizacion = indem1 + indem2;
+        explicacionIndem = `Cálculo mixto: 45 días/año hasta feb-2012 y 33 días/año desde entonces.`;
+      } else {
+        indemnizacion = (33 * salarioDiario) * añosTrabajados;
+        let tope = (salarioMes * pagas / 12) * 24; // 24 mensualidades
+        if(indemnizacion > tope) indemnizacion = tope;
+        explicacionIndem = `Despido improcedente: 33 días por año trabajado (tope 24 mensualidades).`;
       }
     }
-    liquidoNomina -= montoEmbargado;
 
-    // 4. Indemnización y Finiquito (Si aplica)
-    let indemnizacion = 0;
-    let valorVacaciones = 0;
-    if (motivo !== 'ninguno' && !isNaN(fechaIni) && !isNaN(fechaFin)) {
-      const diasTrabajados = Math.max(1, Math.ceil((fechaFin - fechaIni) / (1000 * 60 * 60 * 24)));
-      const anosTrabajados = diasTrabajados / 365;
-      const salarioDiario = (salarioMensualBruto * numPagas) / 365;
+    // 3. Cálculo de Finiquito
+    const mesActualDias = fFin.getDate();
+    let salarioPendiente = (salarioMes / 30) * mesActualDias; // Simplificación mes laboral 30 días
+    let vacacionesPendientes = vacaciones * salarioDiario;
+    
+    // Pagas extra (si son 14 pagas, calculamos el devengo de las 2 pagas extra)
+    let pagasExtraDevengadas = 0;
+    if (pagas === 14) {
+      // Simplificación: asume devengo anual y pago en junio/dic. 
+      // Se estima aprox un 16.6% del salario anual devengado no cobrado de media en una fecha aleatoria.
+      pagasExtraDevengadas = (salarioMes * 2) * (mesActualDias / 360); 
+    }
+    
+    let totalFiniquito = salarioPendiente + vacacionesPendientes + pagasExtraDevengadas;
 
-      let diasPorAno = 0;
-      if (motivo === 'improcedente') diasPorAno = 33;
-      else if (motivo === 'objetivo') diasPorAno = 20;
-      else if (motivo === 'fin_contrato') diasPorAno = 12;
-
-      indemnizacion = salarioDiario * diasPorAno * anosTrabajados;
-      valorVacaciones = salarioDiario * vacaciones;
+    // Embargo (LEC 607) - Se aplica sobre el Finiquito Neto (simplificado)
+    let descuentoEmbargo = 0;
+    if (tieneEmbargo && totalFiniquito > LegalConfig.SMI_mensual) {
+      let restante = totalFiniquito - LegalConfig.SMI_mensual;
+      let tramo = 0;
+      while (restante > 0 && tramo < 5) {
+        let cantidadTramo = Math.min(restante, LegalConfig.SMI_mensual);
+        descuentoEmbargo += cantidadTramo * LegalConfig.tramos_embargo[tramo];
+        restante -= cantidadTramo;
+        tramo++;
+      }
+      totalFiniquito -= descuentoEmbargo;
     }
 
-    const totalFinalCobrar = liquidoNomina + indemnizacion + valorVacaciones;
+    // 4. Cálculo de Paro (Prestación Contributiva)
+    let derechoParo = (motivo !== 'baja_voluntaria' && diasTrabajadosTotales >= 360);
+    let duracionParo = 0;
+    let cuantiaParo = 0;
 
-    // Generar vista HTML del informe
-    const reportHTML = `
-      <div class="report-row"><span>Salario Base Bruto:</span><span>${salarioMensualBruto.toFixed(2)} €</span></div>
-      ${horasExtras > 0 ? `<div class="report-row"><span>Horas Extras:</span><span>+${horasExtras.toFixed(2)} €</span></div>` : ''}
-      ${comisiones > 0 ? `<div class="report-row"><span>Comisiones / Bonus:</span><span>+${comisiones.toFixed(2)} €</span></div>` : ''}
-      <div class="report-row" style="font-weight:600;"><span>Total Bruto Devengado:</span><span>${totalDevengado.toFixed(2)} €</span></div>
-      <br>
-      <div class="report-row"><span>Retención IRPF (${irpfPorcentaje}%):</span><span>-${cuotaIRPF.toFixed(2)} €</span></div>
-      <div class="report-row"><span>Cotización Seg. Social (6.35%):</span><span>-${cuotaSS.toFixed(2)} €</span></div>
-      ${anticipos > 0 ? `<div class="report-row"><span>Anticipos Cobrados:</span><span>-${anticipos.toFixed(2)} €</span></div>` : ''}
-      ${gastosVariables > 0 ? `<div class="report-row"><span>Otros Descuentos/Gastos:</span><span>-${gastosVariables.toFixed(2)} €</span></div>` : ''}
-      ${montoEmbargado > 0 ? `<div class="report-row" style="color:#b91c1c;"><span>Embargo Aplicado (Art. 607 LEC):</span><span>-${montoEmbargado.toFixed(2)} €</span></div>` : ''}
-      <br>
-      <div class="report-row" style="font-weight:600;"><span>Líquido Nómina Mensual:</span><span>${liquidoNomina.toFixed(2)} €</span></div>
-      ${indemnizacion > 0 ? `<div class="report-row"><span>Indemnización por Extinción:</span><span>+${indemnizacion.toFixed(2)} €</span></div>` : ''}
-      ${valorVacaciones > 0 ? `<div class="report-row"><span>Finiquito Vacaciones:</span><span>+${valorVacaciones.toFixed(2)} €</span></div>` : ''}
-      <br>
-      <div class="report-row total"><span>TOTAL NETO ESTIMADO A PERCIBIR:</span><span>${totalFinalCobrar.toFixed(2)} €</span></div>
+    if (derechoParo) {
+      // Buscar en tabla SEPE
+      let sepeMatch = LegalConfig.tabla_sepe.find(t => diasTrabajadosTotales >= t.min && diasTrabajadosTotales <= t.max);
+      duracionParo = sepeMatch ? sepeMatch.paro : (diasTrabajadosTotales > 2160 ? 720 : 0);
+      
+      // Cuantía: 70% Base Reguladora (simplificada = salario mensual)
+      cuantiaParo = salarioMes * 0.70;
+
+      // Aplicar Límites SEPE
+      let maximoParo = hijos >= 2 ? LegalConfig.paro_limites.maximo_2_hijos : 
+                       (hijos === 1 ? LegalConfig.paro_limites.maximo_1_hijo : LegalConfig.paro_limites.maximo_sin_hijos);
+      let minimoParo = hijos > 0 ? LegalConfig.paro_limites.minimo_con_hijos : LegalConfig.paro_limites.minimo_sin_hijos;
+
+      if (cuantiaParo > maximoParo) cuantiaParo = maximoParo;
+      if (cuantiaParo < minimoParo) cuantiaParo = minimoParo;
+    }
+
+    let totalInicial = indemnizacion + totalFiniquito;
+    let mesesParo = Math.floor(duracionParo / 30);
+
+    // Nivel de confianza
+    let badgeClass = (fInicio < LegalConfig.fecha_reforma_laboral || tieneEmbargo) ? "confidence-medium" : "confidence-high";
+    let badgeText = (fInicio < LegalConfig.fecha_reforma_laboral || tieneEmbargo) ? "ESTIMACIÓN - NECESITA REVISIÓN" : "ESTIMACIÓN ALTA CONFIANZA";
+
+    // 5. Renderizar Resultados
+    const htmlResultados = `
+      <div class="result-header">
+        <span class="confidence-badge ${badgeClass}">${badgeText}</span>
+        <h2>Total estimado al salir (Indemnización + Finiquito)</h2>
+        <div class="total-amount">${totalInicial.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2})} €</div>
+        <p style="font-size: 0.9rem; opacity: 0.8;">Esta es la cantidad que deberías recibir en el momento de tu cese.</p>
+      </div>
+
+      <div class="breakdown-grid">
+        <!-- INDEMNIZACIÓN -->
+        <div class="breakdown-card">
+          <h3>💰 Indemnización</h3>
+          <div class="breakdown-amount">${indemnizacion.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2})} €</div>
+          <ul class="breakdown-list">
+            <li><span>Antigüedad computada:</span> <span>${añosTrabajados.toFixed(1)} años</span></li>
+            <li><span>Salario regulador/día:</span> <span>${salarioDiario.toFixed(2)} €/día</span></li>
+          </ul>
+          <p style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);"><strong>¿Cómo lo hemos calculado?</strong><br>${explicacionIndem}</p>
+        </div>
+
+        <!-- FINIQUITO -->
+        <div class="breakdown-card">
+          <h3>📄 Finiquito</h3>
+          <div class="breakdown-amount">${totalFiniquito.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2})} €</div>
+          <ul class="breakdown-list">
+            <li><span>Días de salario sueltos:</span> <span>${salarioPendiente.toFixed(2)} €</span></li>
+            <li><span>Vacaciones (${vacaciones} d):</span> <span>${vacacionesPendientes.toFixed(2)} €</span></li>
+            ${pagas === 14 ? `<li><span>Parte pagas extra:</span> <span>${pagasExtraDevengadas.toFixed(2)} €</span></li>` : ''}
+            ${tieneEmbargo ? `<li style="color:var(--danger)"><span>Retención Embargo:</span> <span>-${descuentoEmbargo.toFixed(2)} €</span></li>` : ''}
+          </ul>
+        </div>
+      </div>
+
+      <!-- DESEMPLEO (PARO) -->
+      <div class="breakdown-card" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
+        <h3>🟢 Paro estimado (Prestación por desempleo)</h3>
+        ${derechoParo ? `
+          <div class="breakdown-amount">${cuantiaParo.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2})} € <span style="font-size:1rem; color:var(--text-muted)">/ mes bruto</span></div>
+          <ul class="breakdown-list">
+            <li><span>Duración estimada:</span> <span><strong>${mesesParo} meses</strong> (${duracionParo} días)</span></li>
+            <li><span>Total prestaciones estimado:</span> <span>${(cuantiaParo * mesesParo).toLocaleString('es-ES')} €</span></li>
+          </ul>
+          <p style="font-size: 0.8rem; margin-top: 10px;">Aplicado tope según cargas familiares (IPREM actual). A partir del mes 7 la cuantía bajará del 70% al 60%.</p>
+        ` : `
+          <p style="color: var(--text-muted);">En tu supuesto actual (ej. baja voluntaria o menos de 360 días trabajados), <strong>no se genera derecho a prestación contributiva inmediata</strong>.</p>
+        `}
+      </div>
+
+      <div class="legal-sources">
+        <h4>🏛 Fuentes Normativas Utilizadas (Actualizado: ${LegalConfig.actualizacion})</h4>
+        <ul>
+          <li><strong>Indemnizaciones y Finiquito:</strong> Estatuto de los Trabajadores (Real Decreto Legislativo 2/2015). Considera reforma Ley 3/2012.</li>
+          <li><strong>Desempleo (Paro):</strong> Tablas de duración del SEPE y topes IPREM anual vigentes (Ministerio de Trabajo).</li>
+          ${tieneEmbargo ? '<li><strong>Embargos:</strong> Artículo 607 de la Ley de Enjuiciamiento Civil (LEC) sobre la inembargabilidad del SMI.</li>' : ''}
+        </ul>
+        <p><em>Aviso legal: Esta herramienta genera una estimación orientativa sin valor jurídico. Las nóminas reales incluyen deducciones de IRPF y Seguridad Social que pueden alterar el neto final.</em></p>
+      </div>
+      
+      <button class="btn btn-next" style="width: 100%; justify-content: center; margin-top: 20px;" onclick="location.reload()">Hacer otro cálculo</button>
     `;
 
-    document.getElementById('report-details').innerHTML = reportHTML;
+    document.getElementById('resultados-container').innerHTML = htmlResultados;
   }
-
-  function descargarPDF() {
-    const element = document.getElementById('pdf-report');
-    const opt = {
-      margin:       10,
-      filename:     'Informe_Liquidacion_Laboral.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-  }
-
-  // Inicialización
-  updateWizardUI();
 </script>
+
 </body>
 </html>
